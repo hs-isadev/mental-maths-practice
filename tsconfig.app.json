@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@arena/domain": ["packages/domain/src/index.ts"],
+      "@arena/questions": ["packages/question-engine/src/index.ts"],
+      "@arena/adaptive": ["packages/adaptive-engine/src/index.ts"],
+      "@arena/analytics": ["packages/analytics/src/index.ts"]
+    },
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
+  },
+  "include": ["apps/web/src", "packages", "vitest.config.ts", "apps/web/vite.config.ts"]
+}
