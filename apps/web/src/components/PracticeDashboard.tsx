@@ -11,6 +11,7 @@ import {
   Ruler,
   Share2,
   ShoppingBasket,
+  Shuffle,
   Split,
   Superscript,
   Target,
@@ -43,6 +44,7 @@ const icons: Record<PracticeModeId, LucideIcon> = {
   powers: Superscript,
   estimation: Ruler,
   applied: ShoppingBasket,
+  mixed: Shuffle,
 };
 
 export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLevel, onStart, onClear, onShareApp }: PracticeDashboardProps) {

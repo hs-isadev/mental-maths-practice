@@ -67,6 +67,9 @@
 .practice-question-stage { min-height: calc(100vh - 117px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px; }
 .practice-topic { color: #687368; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .practice-question-stage h1 { max-width: 900px; margin: 42px 0 44px; text-align: center; font-family: var(--mono); font-size: clamp(42px, 7vw, 82px); line-height: 1.12; letter-spacing: -.05em; }
+.practice-question-stage h1.flash-hidden { color: #8b968b; letter-spacing: .12em; }
+.flash-status { min-height: 24px; margin: -26px 0 20px; color: #667166; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.flash-status.hidden { color: #904b44; }
 .practice-answer-form .conversion-input { grid-template-columns: auto 1fr auto; }
 .practice-answer-form .conversion-input input { text-transform: none; }
 .practice-live-panel { padding: 34px 28px; color: #e6ebe2; background: #111612; border-left: 1px solid var(--line); }

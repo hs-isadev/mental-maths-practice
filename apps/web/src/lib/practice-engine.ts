@@ -11,7 +11,13 @@ export type PracticeModeId =
   | "ratios"
   | "powers"
   | "estimation"
-  | "applied";
+  | "applied"
+  | "mixed";
+
+const MIXED_CATEGORY_IDS = [
+  "addition", "subtraction", "multiplication", "division", "fractions",
+  "percentages", "ratios", "powers", "estimation", "applied",
+] as const satisfies readonly Exclude<PracticeModeId, "mixed">[];
 
 export interface PracticeMode {
   id: PracticeModeId;
@@ -30,6 +36,7 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
   { id: "powers", label: "Powers", description: "Squares and cubes for quick recall." },
   { id: "estimation", label: "Estimation", description: "Round values to useful place values." },
   { id: "applied", label: "Applied problems", description: "Short price, grouping, and change questions." },
+  { id: "mixed", label: "General maths", description: "A shuffled mix with two questions from every topic." },
 ] as const;
 
 export interface PracticeQuestion {
@@ -104,7 +111,7 @@ function greatestCommonDivisor(a: number, b: number): number {
   return left;
 }
 
-function generateQuestion(random: () => number, mode: PracticeModeId, level: number): Omit<PracticeQuestion, "id" | "ordinal"> {
+function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "mixed">, level: number): Omit<PracticeQuestion, "id" | "ordinal"> {
   const maximums = [20, 100, 500, 2_000, 10_000];
   const maximum = maximums[level - 1] ?? maximums[0]!;
 
@@ -133,6 +140,15 @@ function generateQuestion(random: () => number, mode: PracticeModeId, level: num
     return { mode, prompt: `${divisor * quotient} ÷ ${divisor}`, answer: quotient, strategy: "Reverse the related multiplication fact.", level };
   }
   if (mode === "fractions") {
+    if (level >= 2) {
+      const denominator = integer(random, 7, 15 + level * 5);
+      let numerator = integer(random, denominator + 1, denominator * 3);
+      if (numerator % denominator === 0) numerator += 1;
+      let amount = integer(random, 3, 12 + level * 4);
+      while ((numerator * amount) % denominator === 0) amount += 1;
+      const answer = Math.round((numerator * amount / denominator + Number.EPSILON) * 100) / 100;
+      return { mode, prompt: `${numerator}/${denominator} of ${amount} (2 d.p.)`, answer, strategy: "Multiply by the numerator, divide by the denominator, then round to two decimal places.", level };
+    }
     const denominators = level <= 2 ? [2, 3, 4, 5] : level <= 4 ? [2, 3, 4, 5, 6, 8, 10] : [3, 4, 5, 6, 8, 10, 12];
     const denominator = choose(random, denominators);
     const numerator = integer(random, 1, denominator - 1);
@@ -179,10 +195,17 @@ export function createPracticeSession(seed: number, mode: PracticeModeId, reques
   const random = seededRandom((seed >>> 0) ^ modeHash(mode));
   const questions: PracticeQuestion[] = [];
   const prompts = new Set<string>();
+  const schedule: Exclude<PracticeModeId, "mixed">[] = mode === "mixed"
+    ? [...MIXED_CATEGORY_IDS, ...MIXED_CATEGORY_IDS]
+    : Array.from({ length: PRACTICE_SESSION_LENGTH }, () => mode);
+  for (let index = schedule.length - 1; index > 0; index -= 1) {
+    const swapIndex = integer(random, 0, index);
+    [schedule[index], schedule[swapIndex]] = [schedule[swapIndex]!, schedule[index]!];
+  }
   let attempts = 0;
   while (questions.length < PRACTICE_SESSION_LENGTH && attempts < 5_000) {
     attempts += 1;
-    const generated = generateQuestion(random, mode, level);
+    const generated = generateQuestion(random, schedule[questions.length]!, level);
     if (prompts.has(generated.prompt)) continue;
     prompts.add(generated.prompt);
     questions.push({ ...generated, id: `practice-${seed}-${mode}-${questions.length}`, ordinal: questions.length + 1 });

@@ -24,6 +24,8 @@ interface PracticeSessionProps {
 
 interface Feedback { correct: boolean; answer: number; strategy: string }
 
+const FLASH_DURATION_MS = 500;
+
 export function PracticeSession({ questions, mode, level, seed, onComplete, onExit }: PracticeSessionProps) {
   const [index, setIndex] = useState(0);
   const [attempts, setAttempts] = useState<PracticeAttempt[]>([]);
@@ -124,7 +126,7 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
       <div className="practice-drill-body">
         <section className="practice-question-stage">
           <span className="practice-topic">{descriptor.label} · Level {level}</span>
-          <h1>{question.prompt}</h1>
+          <FlashedQuestion key={question.id} prompt={question.prompt} flash={level === 5} />
           <form className="conversion-form practice-answer-form" onSubmit={submit}>
             <label htmlFor="practice-answer">Your answer</label>
             <div className="conversion-input"><span aria-hidden="true">=</span><input ref={inputRef} id="practice-answer" autoFocus autoComplete="off" spellCheck={false} inputMode="decimal" aria-invalid={Boolean(validation)} aria-describedby={validation ? "practice-validation" : "practice-instruction"} /><button type="submit" aria-label="Submit answer"><CornerDownLeft /><span>Submit</span></button></div>
@@ -142,6 +144,23 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
       {feedback && <div className={feedback.correct ? "answer-feedback correct" : "answer-feedback wrong"} role="status" aria-live="assertive"><span className="feedback-icon">{feedback.correct ? <Check /> : <X />}</span><div><small>{feedback.correct ? "CORRECT" : `ANSWER · ${feedback.answer.toLocaleString()}`}</small><strong>{feedback.correct ? "Next question" : feedback.strategy}</strong></div></div>}
       <footer className="drill-footer"><span><Command />ESC to exit</span><span><Clock3 />Each answer is timed</span></footer>
     </main>
+  );
+}
+
+function FlashedQuestion({ prompt, flash }: { prompt: string; flash: boolean }) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (!flash) return;
+    const timer = window.setTimeout(() => setVisible(false), FLASH_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [flash]);
+
+  return (
+    <>
+      <h1 className={visible ? "" : "flash-hidden"}>{visible ? prompt : "•••"}</h1>
+      {flash && <span className={visible ? "flash-status" : "flash-status hidden"}>{visible ? "Memorise the question" : "Question hidden — answer from memory"}</span>}
+    </>
   );
 }
 
