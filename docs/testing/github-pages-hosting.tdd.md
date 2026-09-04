@@ -52,9 +52,9 @@ The generated GitHub build was inspected to confirm that its document assets, ma
 | 5 | Both root-hosted and GitHub-subpath bundles compile | two production build variants | Build | PASS |
 | 6 | Pushes use GitHub's official build and Pages deployment actions | `.github/workflows/pages.yml` | Deployment configuration | PASS |
 
-## Known gap
+## Deployment result and known gap
 
-The local GitHub CLI session needs fresh authentication before the repository can be created and the first workflow run can be published. This does not affect the verified build output.
+GitHub's Pages workflow completed successfully and the public page, manifest, and service worker returned HTTP 200. The deployed manifest uses `/mental-maths-practice/` for its start URL, scope, and icons. Physical-device installation remains a manual browser action and was not automated.
 
 ## Verification of delegated suggestion
 
