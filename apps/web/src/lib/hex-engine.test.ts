@@ -45,6 +45,12 @@ describe("hex conversion engine", () => {
     expect(createHexSession(123456, 4)).toEqual(createHexSession(123456, 4));
   });
 
+  it("creates a fresh question set when a new session seed is used", () => {
+    const first = createHexSession(123456, 2).map((question) => `${question.direction}:${question.value}`);
+    const second = createHexSession(654321, 2).map((question) => `${question.direction}:${question.value}`);
+    expect(second).not.toEqual(first);
+  });
+
   it("accepts uppercase, lowercase, and an optional 0x prefix for hex answers", () => {
     expect(checkHexAnswer("ff", "FF", "decimal-to-hex")).toBe(true);
     expect(checkHexAnswer("0xFF", "FF", "decimal-to-hex")).toBe(true);
