@@ -123,6 +123,7 @@ export function HexSession({ questions, level, seed, onComplete, onExit }: HexSe
 
       <div className="drill-body">
         <section className="conversion-stage">
+          <span className="session-range-label">{level === 1 ? "Basic range · 00–FF" : `Level ${level} range`}</span>
           <div className="direction-label"><span>{question.sourceLabel}</span><ArrowRight /><span>{question.targetLabel}</span></div>
           <div className="question-value"><small>{question.sourceLabel === "HEX" ? "0x" : ""}</small>{question.prompt}<sub>{question.sourceLabel === "HEX" ? "16" : "10"}</sub></div>
           <form className="conversion-form" onSubmit={submit}>

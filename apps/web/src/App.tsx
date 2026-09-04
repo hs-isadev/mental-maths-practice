@@ -19,6 +19,7 @@ import { clearPracticeHistory, loadPracticeHistory, savePracticeSession } from "
 import { buildChallengeUrl, readChallenge, type Challenge, type ChallengeMode } from "./lib/share";
 
 type Screen = "dashboard" | "practice-session" | "hex-session" | "practice-summary" | "hex-summary";
+type SessionStartOptions = Partial<Pick<Challenge, "seed" | "level">>;
 
 function initialLevels(): Record<PracticeModeId, number> {
   return Object.fromEntries(PRACTICE_MODES.map((mode) => [mode.id, 2])) as Record<PracticeModeId, number>;
@@ -59,9 +60,9 @@ export function App() {
     return () => { active = false; };
   }, []);
 
-  const startSession = useCallback((mode: ChallengeMode, challenge?: Challenge) => {
-    const nextSeed = challenge?.seed ?? createRandomSeed();
-    const nextLevel = challenge?.level ?? (mode === "hexadecimal" ? hexLevel : levels[mode]);
+  const startSession = useCallback((mode: ChallengeMode, options?: SessionStartOptions) => {
+    const nextSeed = options?.seed ?? createRandomSeed();
+    const nextLevel = options?.level ?? (mode === "hexadecimal" ? hexLevel : levels[mode]);
     setActiveMode(mode);
     setActiveLevel(nextLevel);
     setSeed(nextSeed);
@@ -136,7 +137,7 @@ export function App() {
     return <PracticeSummary result={practiceResult} onHome={() => setScreen("dashboard")} onRetry={() => startSession(practiceResult.mode)} onShare={() => shareChallenge(practiceResult.mode, practiceResult.level, practiceResult.seed)} />;
   }
   if (screen === "hex-summary" && hexResult) {
-    return <HexSummary result={hexResult} onHome={() => setScreen("dashboard")} onRetry={() => startSession("hexadecimal")} onShare={() => shareChallenge("hexadecimal", hexResult.level, hexResult.seed)} />;
+    return <HexSummary result={hexResult} onHome={() => setScreen("dashboard")} onRetry={() => startSession("hexadecimal", { level: hexResult.level })} onShare={() => shareChallenge("hexadecimal", hexResult.level, hexResult.seed)} />;
   }
   return <PracticeDashboard practiceHistory={practiceHistory} hexHistory={hexHistory} levels={levels} hexLevel={hexLevel} onStart={startSession} onClear={() => void clearHistory()} onShareApp={() => {
     const url = new URL(window.location.href);
