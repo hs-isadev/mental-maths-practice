@@ -11,7 +11,7 @@ describe("general mental maths engine", () => {
   it("supports every requested non-hexadecimal topic", () => {
     expect(PRACTICE_MODES.map((mode) => mode.id)).toEqual([
       "addition", "subtraction", "multiplication", "division", "fractions",
-      "percentages", "ratios", "powers", "estimation", "applied",
+      "percentages", "ratios", "powers", "estimation", "applied", "mixed",
     ]);
   });
 
@@ -37,6 +37,28 @@ describe("general mental maths engine", () => {
     const first = createPracticeSession(1, "multiplication", 2).map((question) => question.prompt);
     const second = createPracticeSession(2, "multiplication", 2).map((question) => question.prompt);
     expect(second).not.toEqual(first);
+  });
+
+  it("mixes every maths category into each general session", () => {
+    const questions = createPracticeSession(333, "mixed", 3);
+    const counts = new Map<string, number>();
+    for (const question of questions) counts.set(question.mode, (counts.get(question.mode) ?? 0) + 1);
+
+    expect(questions).toHaveLength(20);
+    expect([...counts.keys()].sort()).toEqual([
+      "addition", "applied", "division", "estimation", "fractions",
+      "multiplication", "percentages", "powers", "ratios", "subtraction",
+    ]);
+    expect([...counts.values()].every((count) => count === 2)).toBe(true);
+    expect(createPracticeSession(333, "mixed", 3)).toEqual(questions);
+  });
+
+  it("generates awkward improper fractions with non-whole answers", () => {
+    const questions = createPracticeSession(444, "fractions", 5);
+    expect(questions.some((question) => {
+      const match = question.prompt.match(/^(\d+)\/(\d+)/);
+      return match && Number(match[1]) > Number(match[2]) && !Number.isInteger(question.answer);
+    })).toBe(true);
   });
 
   it("tracks mean speed from correct answers and uses it for difficulty", () => {
