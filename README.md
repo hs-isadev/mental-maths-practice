@@ -21,6 +21,10 @@ npm run dev
 
 Open `http://localhost:4173`. Build the static production version with `npm run build`; the contents of `dist/` can be hosted on any static web host and shared with friends.
 
+## GitHub Pages
+
+The repository includes a GitHub Pages workflow. Every push to `main` or `master` runs the tests and quality checks, builds the app for the repository subpath, and publishes `dist/`. The Vite base path, web manifest, service-worker scope, install icons, and offline cache are rewritten for `/<repository-name>/` during that build.
+
 ## Install on a phone
 
 The hosted website is also an installable Progressive Web App. On Android, open it in Chrome and choose **Install app**. On iPhone or iPad, open it in Safari, tap **Share**, then **Add to Home Screen**. It launches in its own app window and keeps the practice shell available offline after the first successful visit.

@@ -50,11 +50,12 @@ describe("installable mobile app assets", () => {
   it("keeps the app shell and icon set available offline", () => {
     const serviceWorker = read("public/sw.js");
 
-    expect(serviceWorker).toContain('"/icon-192.png"');
-    expect(serviceWorker).toContain('"/icon-512.png"');
-    expect(serviceWorker).toContain('"/apple-touch-icon.png"');
+    expect(serviceWorker).toContain('appUrl("icon-192.png")');
+    expect(serviceWorker).toContain('appUrl("icon-512.png")');
+    expect(serviceWorker).toContain('appUrl("apple-touch-icon.png")');
     expect(serviceWorker).toContain('"__PRECACHE_ASSETS__"');
+    expect(serviceWorker).toContain('"__APP_BASE__"');
     expect(serviceWorker).toContain("request.mode === \"navigate\"");
-    expect(serviceWorker).toContain('caches.match("/")');
+    expect(serviceWorker).toContain("caches.match(appUrl())");
   });
 });

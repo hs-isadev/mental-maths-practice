@@ -1,13 +1,15 @@
 const CACHE = "mental-maths-shell-v3";
+const APP_BASE = "__APP_BASE__";
 const BUILD_ASSETS = "__PRECACHE_ASSETS__";
+const appUrl = (path = "") => `${APP_BASE}${path.replace(/^\/+/, "")}`;
 const SHELL = [
-  "/",
-  "/manifest.webmanifest",
-  "/arena-mark.svg",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/icon-maskable-512.png",
-  "/apple-touch-icon.png",
+  appUrl(),
+  appUrl("manifest.webmanifest"),
+  appUrl("arena-mark.svg"),
+  appUrl("icon-192.png"),
+  appUrl("icon-512.png"),
+  appUrl("icon-maskable-512.png"),
+  appUrl("apple-touch-icon.png"),
   ...(Array.isArray(BUILD_ASSETS) ? BUILD_ASSETS : []),
 ];
 
@@ -27,10 +29,10 @@ self.addEventListener("fetch", (event) => {
       fetch(event.request)
         .then((response) => {
           const clone = response.clone();
-          void caches.open(CACHE).then((cache) => cache.put("/", clone));
+          void caches.open(CACHE).then((cache) => cache.put(appUrl(), clone));
           return response;
         })
-        .catch(() => caches.match("/")),
+        .catch(() => caches.match(appUrl())),
     );
     return;
   }
