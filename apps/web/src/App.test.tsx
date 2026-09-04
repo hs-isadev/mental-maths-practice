@@ -1,19 +1,17 @@
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 
-describe("app shell", () => {
-  it("opens on the actionable Today workspace", () => {
-    render(<MemoryRouter><App /></MemoryRouter>);
-    expect(screen.getByRole("heading", { name: /ready for today's run/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /start daily workout/i })).toBeEnabled();
+describe("hex conversion trainer", () => {
+  it("opens on the focused hexadecimal test briefing", () => {
+    render(<App />);
+    expect(screen.getByRole("heading", { name: /convert faster under pressure/i })).toBeVisible();
+    expect(screen.getByText("40 conversions")).toBeVisible();
+    expect(screen.getByText("20:00 limit")).toBeVisible();
   });
 
-  it("exposes the primary product areas", () => {
-    render(<MemoryRouter><App /></MemoryRouter>);
-    for (const name of ["Today", "Practice", "Skill map", "Progress", "Challenges"]) {
-      expect(screen.getByRole("link", { name })).toBeVisible();
-    }
+  it("has one obvious action to start the timed session", () => {
+    render(<App />);
+    expect(screen.getByRole("button", { name: /start 40-question session/i })).toBeEnabled();
   });
 });
