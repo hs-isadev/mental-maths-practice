@@ -79,15 +79,17 @@ describe("hex conversion engine", () => {
     expect(adaptHexLevel(3, { accuracy: .9, medianMs: 6_000, attempts: 10 })).toBe(3);
   });
 
-  it("summarizes pace from correct answers and keeps direction splits", () => {
+  it("summarizes mean pace from correct answers and keeps direction splits", () => {
     const summary = summarizeHexAttempts([
+      { direction: "decimal-to-hex", correct: true, responseMs: 1_000 },
       { direction: "decimal-to-hex", correct: true, responseMs: 2_000 },
-      { direction: "decimal-to-hex", correct: false, responseMs: 800 },
-      { direction: "hex-to-decimal", correct: true, responseMs: 4_000 },
+      { direction: "decimal-to-hex", correct: false, responseMs: 100 },
+      { direction: "hex-to-decimal", correct: true, responseMs: 9_000 },
     ]);
-    expect(summary.accuracy).toBeCloseTo(2 / 3);
-    expect(summary.medianMs).toBe(3_000);
-    expect(summary.byDirection["decimal-to-hex"].accuracy).toBe(.5);
+    expect(summary.accuracy).toBeCloseTo(3 / 4);
+    expect(summary.meanMs).toBe(4_000);
+    expect(summary.byDirection["decimal-to-hex"].meanMs).toBe(1_500);
+    expect(summary.byDirection["decimal-to-hex"].accuracy).toBeCloseTo(2 / 3);
     expect(summary.byDirection["hex-to-decimal"].accuracy).toBe(1);
   });
 
@@ -96,6 +98,6 @@ describe("hex conversion engine", () => {
     expect(formatDuration(-10)).toBe("00:00");
     expect(levelMaximum(0)).toBe(0xff);
     expect(levelMaximum(99)).toBe(0xffffff);
-    expect(summarizeHexAttempts([]).medianMs).toBe(0);
+    expect(summarizeHexAttempts([]).meanMs).toBe(0);
   });
 });

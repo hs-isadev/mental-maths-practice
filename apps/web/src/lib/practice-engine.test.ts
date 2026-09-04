@@ -39,11 +39,18 @@ describe("general mental maths engine", () => {
     expect(second).not.toEqual(first);
   });
 
-  it("tracks accuracy and median speed, then adjusts difficulty conservatively", () => {
+  it("tracks mean speed from correct answers and uses it for difficulty", () => {
+    const varied = summarizePracticeAttempts([
+      { correct: true, responseMs: 1_000 },
+      { correct: true, responseMs: 2_000 },
+      { correct: true, responseMs: 9_000 },
+      { correct: false, responseMs: 100 },
+    ]);
     const strong = summarizePracticeAttempts(Array.from({ length: 20 }, () => ({ correct: true, responseMs: 1_500 })));
     const struggling = summarizePracticeAttempts(Array.from({ length: 20 }, (_, index) => ({ correct: index < 10, responseMs: 7_000 })));
+    expect(varied.meanMs).toBe(4_000);
     expect(strong.accuracy).toBe(1);
-    expect(strong.medianMs).toBe(1_500);
+    expect(strong.meanMs).toBe(1_500);
     expect(adaptPracticeLevel(2, strong)).toBe(3);
     expect(adaptPracticeLevel(4, struggling)).toBe(3);
   });
