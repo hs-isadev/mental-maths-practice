@@ -34,10 +34,12 @@ describe("hex conversion engine", () => {
     expect(() => hexToDecimal("1000000")).toThrow(RangeError);
   });
 
-  it("balances both conversion directions exactly", () => {
+  it("groups the two conversion directions into clear 20-question blocks", () => {
     const questions = createHexSession(902, 3);
     expect(questions.filter((question) => question.direction === "decimal-to-hex")).toHaveLength(20);
     expect(questions.filter((question) => question.direction === "hex-to-decimal")).toHaveLength(20);
+    expect(questions.slice(0, 20).every((question) => question.direction === "decimal-to-hex")).toBe(true);
+    expect(questions.slice(20).every((question) => question.direction === "hex-to-decimal")).toBe(true);
     expect(new Set(questions.map((question) => question.id)).size).toBe(40);
   });
 
