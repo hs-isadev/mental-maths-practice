@@ -135,7 +135,7 @@ export function HexSession({ questions, level, seed, onComplete, onExit }: HexSe
         </section>
 
         <aside className="drill-aside">
-          <div className="live-readout"><span className="kicker">Live readout</span><div><span><small>Accuracy</small><strong>{attempts.length ? `${Math.round(liveSummary.accuracy * 100)}%` : "—"}</strong></span><span><small>Median</small><strong>{liveSummary.medianMs ? `${(liveSummary.medianMs / 1000).toFixed(1)}s` : "—"}</strong></span></div></div>
+          <div className="live-readout"><span className="kicker">Live readout</span><div><span><small>Accuracy</small><strong>{attempts.length ? `${Math.round(liveSummary.accuracy * 100)}%` : "—"}</strong></span><span><small>Average</small><strong>{liveSummary.meanMs ? `${(liveSummary.meanMs / 1000).toFixed(1)}s` : "—"}</strong></span></div></div>
           <div className="pace-ticks"><div className="panel-title"><span>RESPONSE PACE</span><small>LAST 12</small></div><div>{attempts.slice(-12).map((attempt, itemIndex) => <i key={`${attempt.questionId}-${itemIndex}`} className={attempt.correct ? "" : "miss"} style={{ height: `${Math.max(12, Math.min(100, 110 - attempt.responseMs / 90))}%` }} />)}{attempts.length === 0 && Array.from({ length: 12 }, (_, itemIndex) => <i key={itemIndex} className="empty" style={{ height: `${25 + ((itemIndex * 17) % 55)}%` }} />)}</div><span><small>slower</small><small>faster</small></span></div>
           <HexReference compact />
           <div className="protocol-note"><ShieldAlert /><p><strong>Test protocol</strong>The 20-minute clock does not pause. Leaving the tab does not create extra time.</p></div>

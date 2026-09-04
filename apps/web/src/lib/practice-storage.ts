@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { PracticeSessionResult } from "./practice-engine";
+import { summarizePracticeAttempts, type PracticeSessionResult } from "./practice-engine";
 
 class PracticeDatabase extends Dexie {
   sessions!: EntityTable<PracticeSessionResult, "id">;
@@ -13,7 +13,10 @@ class PracticeDatabase extends Dexie {
 const database = new PracticeDatabase();
 
 export async function loadPracticeHistory(): Promise<PracticeSessionResult[]> {
-  return database.sessions.orderBy("completedAt").reverse().limit(120).toArray();
+  const sessions = await database.sessions.orderBy("completedAt").reverse().limit(120).toArray();
+  return sessions.map((session) => typeof session.summary.meanMs === "number"
+    ? session
+    : { ...session, summary: summarizePracticeAttempts(session.attempts) });
 }
 
 export async function savePracticeSession(session: PracticeSessionResult): Promise<void> {

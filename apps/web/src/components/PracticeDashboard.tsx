@@ -49,12 +49,12 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
   const [shareStatus, setShareStatus] = useState("Share app");
   const [hexRange, setHexRange] = useState<"basic" | "adaptive">("basic");
   const combined = [
-    ...practiceHistory.map((result) => ({ id: result.id, completedAt: result.completedAt, label: PRACTICE_MODES.find((mode) => mode.id === result.mode)!.label, level: result.level, attempts: result.summary.attempts, accuracy: result.summary.accuracy, medianMs: result.summary.medianMs, durationMs: result.durationMs })),
-    ...hexHistory.map((result) => ({ id: result.id, completedAt: result.completedAt, label: "Hexadecimal", level: result.level, attempts: result.summary.attempts, accuracy: result.summary.accuracy, medianMs: result.summary.medianMs, durationMs: result.durationMs })),
+    ...practiceHistory.map((result) => ({ id: result.id, completedAt: result.completedAt, label: PRACTICE_MODES.find((mode) => mode.id === result.mode)!.label, level: result.level, attempts: result.summary.attempts, accuracy: result.summary.accuracy, meanMs: result.summary.meanMs, durationMs: result.durationMs })),
+    ...hexHistory.map((result) => ({ id: result.id, completedAt: result.completedAt, label: "Hexadecimal", level: result.level, attempts: result.summary.attempts, accuracy: result.summary.accuracy, meanMs: result.summary.meanMs, durationMs: result.durationMs })),
   ].sort((a, b) => b.completedAt.localeCompare(a.completedAt));
   const totalAnswers = combined.reduce((sum, result) => sum + result.attempts, 0);
   const bestAccuracy = combined.length ? Math.max(...combined.map((result) => result.accuracy)) : 0;
-  const latestMedian = combined.find((result) => result.medianMs > 0)?.medianMs ?? 0;
+  const latestMean = combined.find((result) => result.meanMs > 0)?.meanMs ?? 0;
 
   async function shareApp() {
     await onShareApp();
@@ -72,7 +72,7 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
       <div className="practice-shell">
         <section className="practice-intro">
           <div><span className="eyebrow">Practice dashboard</span><h1>Mental maths practice</h1><p>Choose a topic. Each answer is timed, and difficulty adjusts as your results improve.</p></div>
-          <dl><div><dt>Sessions</dt><dd>{combined.length}</dd></div><div><dt>Answers</dt><dd>{totalAnswers}</dd></div><div><dt>Best</dt><dd>{combined.length ? `${Math.round(bestAccuracy * 100)}%` : "—"}</dd></div><div><dt>Latest pace</dt><dd>{latestMedian ? `${(latestMedian / 1_000).toFixed(1)}s` : "—"}</dd></div></dl>
+          <dl><div><dt>Sessions</dt><dd>{combined.length}</dd></div><div><dt>Answers</dt><dd>{totalAnswers}</dd></div><div><dt>Best</dt><dd>{combined.length ? `${Math.round(bestAccuracy * 100)}%` : "—"}</dd></div><div><dt>Average speed</dt><dd>{latestMean ? `${(latestMean / 1_000).toFixed(1)}s` : "—"}</dd></div></dl>
         </section>
 
         <section className="topic-section" aria-labelledby="core-topics">
@@ -100,7 +100,7 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
 
         <section className="recent-practice" aria-labelledby="recent-title">
           <div className="section-heading"><div><span className="eyebrow">Saved locally</span><h2 id="recent-title">Recent sessions</h2></div>{combined.length > 0 && <button className="clear-history-button" onClick={onClear}><Trash2 />Clear history</button>}</div>
-          {combined.length === 0 ? <div className="practice-empty"><History /><p>Complete a session to see your accuracy and speed history here.</p></div> : <div className="practice-history-list">{combined.slice(0, 8).map((result) => <article key={result.id}><span className="history-topic">{result.label}</span><span><small>Accuracy</small><strong>{Math.round(result.accuracy * 100)}%</strong></span><span><small>Median</small><strong>{result.medianMs ? `${(result.medianMs / 1_000).toFixed(1)}s` : "—"}</strong></span><span><small>Time</small><strong>{formatDuration(result.durationMs)}</strong></span><span className="history-level">L{result.level}</span><ChevronRight /></article>)}</div>}
+          {combined.length === 0 ? <div className="practice-empty"><History /><p>Complete a session to see your accuracy and speed history here.</p></div> : <div className="practice-history-list">{combined.slice(0, 8).map((result) => <article key={result.id}><span className="history-topic">{result.label}</span><span><small>Accuracy</small><strong>{Math.round(result.accuracy * 100)}%</strong></span><span><small>Average</small><strong>{result.meanMs ? `${(result.meanMs / 1_000).toFixed(1)}s` : "—"}</strong></span><span><small>Time</small><strong>{formatDuration(result.durationMs)}</strong></span><span className="history-level">L{result.level}</span><ChevronRight /></article>)}</div>}
         </section>
       </div>
       <footer className="practice-page-footer"><span><Target />Accuracy and speed both affect the next level.</span><span>Works offline after the first load.</span></footer>

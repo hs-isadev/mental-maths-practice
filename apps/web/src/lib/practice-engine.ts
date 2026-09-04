@@ -55,7 +55,7 @@ export interface PracticeSummary {
   attempts: number;
   correct: number;
   accuracy: number;
-  medianMs: number;
+  meanMs: number;
 }
 
 export interface PracticeSessionResult {
@@ -196,11 +196,8 @@ export function verifyPracticeAnswer(input: string, question: Pick<PracticeQuest
   return /^-?\d+(?:\.\d+)?$/.test(normalized) && Number(normalized) === question.answer;
 }
 
-function median(values: number[]): number {
-  if (!values.length) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
+function mean(values: number[]): number {
+  return values.length ? values.reduce((total, value) => total + value, 0) / values.length : 0;
 }
 
 export function summarizePracticeAttempts(attempts: Pick<PracticeAttempt, "correct" | "responseMs">[]): PracticeSummary {
@@ -209,7 +206,7 @@ export function summarizePracticeAttempts(attempts: Pick<PracticeAttempt, "corre
     attempts: attempts.length,
     correct: correctAttempts.length,
     accuracy: attempts.length ? correctAttempts.length / attempts.length : 0,
-    medianMs: median(correctAttempts.map((attempt) => attempt.responseMs)),
+    meanMs: mean(correctAttempts.map((attempt) => attempt.responseMs)),
   };
 }
 
@@ -217,7 +214,7 @@ export function adaptPracticeLevel(level: number, summary: PracticeSummary): num
   const current = clamp(Math.round(level), 1, 5);
   if (summary.attempts < 15) return current;
   const paceTarget = [3_000, 3_600, 4_200, 5_000, 6_000][current - 1]!;
-  if (summary.accuracy >= 0.9 && summary.medianMs > 0 && summary.medianMs <= paceTarget) return clamp(current + 1, 1, 5);
+  if (summary.accuracy >= 0.9 && summary.meanMs > 0 && summary.meanMs <= paceTarget) return clamp(current + 1, 1, 5);
   if (summary.accuracy < 0.7) return clamp(current - 1, 1, 5);
   return current;
 }

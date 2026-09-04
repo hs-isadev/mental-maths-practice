@@ -18,7 +18,7 @@ export function HexDashboard({ history, level, setLevel, onStart, onClear }: Das
   const latest = history[0];
   const best = history.reduce<HexSessionResult | undefined>((current, result) => {
     if (!current) return result;
-    return result.summary.accuracy > current.summary.accuracy || (result.summary.accuracy === current.summary.accuracy && result.summary.medianMs < current.summary.medianMs) ? result : current;
+    return result.summary.accuracy > current.summary.accuracy || (result.summary.accuracy === current.summary.accuracy && result.summary.meanMs < current.summary.meanMs) ? result : current;
   }, undefined);
   const nextLevel = latest ? adaptHexLevel(latest.level, latest.summary) : level;
   const bestStreak = Math.max(0, ...history.map((session) => {
@@ -64,7 +64,7 @@ export function HexDashboard({ history, level, setLevel, onStart, onClear }: Das
 
         <section className="metric-row" aria-label="Training metrics">
           <article><span className="metric-symbol"><Trophy /></span><div><small>Best accuracy</small><strong>{best ? `${Math.round(best.summary.accuracy * 100)}%` : "—"}</strong><p>{best ? `${best.summary.correct} / ${best.summary.attempts} answered` : "No session yet"}</p></div></article>
-          <article><span className="metric-symbol cyan"><Clock3 /></span><div><small>Median conversion</small><strong>{latest ? formatPace(latest.summary.medianMs) : "—"}</strong><p>Correct answers only</p></div></article>
+          <article><span className="metric-symbol cyan"><Clock3 /></span><div><small>Average conversion</small><strong>{latest ? formatPace(latest.summary.meanMs) : "—"}</strong><p>Correct answers only</p></div></article>
           <article><span className="metric-symbol orange"><Flame /></span><div><small>Longest clean run</small><strong>{bestStreak || "—"}</strong><p>Consecutive answers</p></div></article>
           <article><span className="metric-symbol purple"><Binary /></span><div><small>Conversions logged</small><strong>{history.reduce((sum, session) => sum + session.attempts.length, 0) || "—"}</strong><p>Across {history.length} sessions</p></div></article>
         </section>
@@ -73,7 +73,7 @@ export function HexDashboard({ history, level, setLevel, onStart, onClear }: Das
           <HexReference />
           <section className="history-panel">
             <div className="panel-title"><div><span className="kicker">History</span><h2>Recent sessions</h2></div>{history.length > 0 && <button className="clear-button" onClick={onClear}><RotateCcw />Clear</button>}</div>
-            {history.length === 0 ? <div className="empty-history"><History /><strong>Your baseline starts here.</strong><p>Complete the first set to unlock direction splits, pace trends, and adaptive ranges.</p></div> : <div className="history-list">{history.slice(0,4).map((session, index) => <article key={session.id}><span className="history-index">{String(index + 1).padStart(2,"0")}</span><span><strong>{Math.round(session.summary.accuracy * 100)}%</strong><small>accuracy</small></span><span><strong>{formatPace(session.summary.medianMs)}</strong><small>median</small></span><span><strong>{formatDuration(session.durationMs)}</strong><small>total</small></span><span className="history-level">L{session.level}</span><ChevronRight /></article>)}</div>}
+            {history.length === 0 ? <div className="empty-history"><History /><strong>Your baseline starts here.</strong><p>Complete the first set to unlock direction splits, pace trends, and adaptive ranges.</p></div> : <div className="history-list">{history.slice(0,4).map((session, index) => <article key={session.id}><span className="history-index">{String(index + 1).padStart(2,"0")}</span><span><strong>{Math.round(session.summary.accuracy * 100)}%</strong><small>accuracy</small></span><span><strong>{formatPace(session.summary.meanMs)}</strong><small>average</small></span><span><strong>{formatDuration(session.durationMs)}</strong><small>total</small></span><span className="history-level">L{session.level}</span><ChevronRight /></article>)}</div>}
           </section>
         </div>
 

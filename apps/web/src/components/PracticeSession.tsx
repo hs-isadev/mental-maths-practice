@@ -134,7 +134,7 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
 
         <aside className="practice-live-panel">
           <h2>Current session</h2>
-          <dl><div><dt>Accuracy</dt><dd>{attempts.length ? `${Math.round(summary.accuracy * 100)}%` : "—"}</dd></div><div><dt>Median time</dt><dd>{summary.medianMs ? `${(summary.medianMs / 1_000).toFixed(1)}s` : "—"}</dd></div><div><dt>Correct</dt><dd>{summary.correct} / {attempts.length}</dd></div></dl>
+          <dl><div><dt>Accuracy</dt><dd>{attempts.length ? `${Math.round(summary.accuracy * 100)}%` : "—"}</dd></div><div><dt>Average speed</dt><dd>{summary.meanMs ? `${(summary.meanMs / 1_000).toFixed(1)}s` : "—"}</dd></div><div><dt>Correct</dt><dd>{summary.correct} / {attempts.length}</dd></div></dl>
           <p><Lightbulb /> Speed is measured per question. Difficulty changes only after a complete session.</p>
         </aside>
       </div>

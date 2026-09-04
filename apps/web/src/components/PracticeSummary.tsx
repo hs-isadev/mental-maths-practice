@@ -30,7 +30,7 @@ export function PracticeSummary({ result, onHome, onRetry, onShare }: PracticeSu
         <p>{result.timedOut ? "The 10-minute limit ended this session." : `Finished in ${formatDuration(result.durationMs)}.`} Your next {mode.label.toLowerCase()} session is level {nextLevel}.</p>
         <section className="simple-result-metrics" aria-label="Session results">
           <div><small>Accuracy</small><strong>{Math.round(result.summary.accuracy * 100)}%</strong></div>
-          <div><small>Median answer</small><strong>{result.summary.medianMs ? `${(result.summary.medianMs / 1_000).toFixed(1)}s` : "—"}</strong></div>
+          <div><small>Average answer</small><strong>{result.summary.meanMs ? `${(result.summary.meanMs / 1_000).toFixed(1)}s` : "—"}</strong></div>
           <div><small>Next level</small><strong>{nextLevel}</strong></div>
         </section>
         <div className="simple-result-actions"><button className="primary" onClick={onRetry}><RotateCcw />Try another set</button><button onClick={() => void share()}>{shared ? <Check /> : <Share2 />}{shared ? "Link copied" : "Challenge a friend"}</button></div>

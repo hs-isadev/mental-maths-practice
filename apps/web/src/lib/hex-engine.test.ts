@@ -74,9 +74,9 @@ describe("hex conversion engine", () => {
   });
 
   it("uses accuracy and pace together when adapting the next session", () => {
-    expect(adaptHexLevel(2, { accuracy: .95, medianMs: 2_500, attempts: 40 })).toBe(3);
-    expect(adaptHexLevel(4, { accuracy: .62, medianMs: 8_000, attempts: 40 })).toBe(3);
-    expect(adaptHexLevel(3, { accuracy: .9, medianMs: 6_000, attempts: 10 })).toBe(3);
+    expect(adaptHexLevel(2, { accuracy: .95, meanMs: 2_500, attempts: 40 })).toBe(3);
+    expect(adaptHexLevel(4, { accuracy: .62, meanMs: 8_000, attempts: 40 })).toBe(3);
+    expect(adaptHexLevel(3, { accuracy: .9, meanMs: 6_000, attempts: 10 })).toBe(3);
   });
 
   it("summarizes mean pace from correct answers and keeps direction splits", () => {

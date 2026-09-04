@@ -30,7 +30,7 @@ export function HexSummary({ result, onHome, onRetry, onShare }: HexSummaryProps
           <div><small>Accuracy</small><strong>{Math.round(result.summary.accuracy * 100)}%</strong></div>
           <div><small>Decimal → hex</small><strong>{result.summary.byDirection["decimal-to-hex"].correct} / 20</strong></div>
           <div><small>Hex → decimal</small><strong>{result.summary.byDirection["hex-to-decimal"].correct} / 20</strong></div>
-          <div><small>Median answer</small><strong>{result.summary.medianMs ? `${(result.summary.medianMs / 1_000).toFixed(1)}s` : "—"}</strong></div>
+          <div><small>Average answer</small><strong>{result.summary.meanMs ? `${(result.summary.meanMs / 1_000).toFixed(1)}s` : "—"}</strong></div>
         </section>
         <div className="simple-result-actions"><button className="primary" onClick={onRetry}><RotateCcw />New random set</button><button onClick={() => void share()}>{shared ? <Check /> : <Share2 />}{shared ? "Link copied" : "Challenge a friend"}</button></div>
         <section className="simple-review">

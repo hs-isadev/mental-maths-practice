@@ -30,7 +30,7 @@ export interface DirectionSummary {
   attempts: number;
   correct: number;
   accuracy: number;
-  medianMs: number;
+  meanMs: number;
 }
 
 export interface HexSummary extends DirectionSummary {
@@ -147,13 +147,8 @@ export function remainingSessionMs(startedAt: number, now: number): number {
   return Math.max(0, HEX_SESSION_DURATION_MS - Math.max(0, now - startedAt));
 }
 
-function median(values: number[]): number {
-  if (!values.length) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2
-    ? (sorted[middle] ?? 0)
-    : ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2;
+function mean(values: number[]): number {
+  return values.length ? values.reduce((total, value) => total + value, 0) / values.length : 0;
 }
 
 function summarizeDirection(attempts: HexAttempt[]): DirectionSummary {
@@ -162,7 +157,7 @@ function summarizeDirection(attempts: HexAttempt[]): DirectionSummary {
     attempts: attempts.length,
     correct,
     accuracy: attempts.length ? correct / attempts.length : 0,
-    medianMs: median(attempts.filter((attempt) => attempt.correct).map((attempt) => attempt.responseMs)),
+    meanMs: mean(attempts.filter((attempt) => attempt.correct).map((attempt) => attempt.responseMs)),
   };
 }
 
@@ -177,11 +172,11 @@ export function summarizeHexAttempts(attempts: HexAttempt[]): HexSummary {
   };
 }
 
-export function adaptHexLevel(level: number, result: Pick<HexSummary, "accuracy" | "medianMs" | "attempts">): number {
+export function adaptHexLevel(level: number, result: Pick<HexSummary, "accuracy" | "meanMs" | "attempts">): number {
   const current = clamp(Math.round(level), 1, 5);
   if (result.attempts < 30) return current;
   const paceTarget = [3_200, 4_100, 5_100, 6_200, 7_300][current - 1] ?? 5_100;
-  if (result.accuracy >= 0.9 && result.medianMs > 0 && result.medianMs <= paceTarget) return clamp(current + 1, 1, 5);
+  if (result.accuracy >= 0.9 && result.meanMs > 0 && result.meanMs <= paceTarget) return clamp(current + 1, 1, 5);
   if (result.accuracy < 0.7) return clamp(current - 1, 1, 5);
   return current;
 }
