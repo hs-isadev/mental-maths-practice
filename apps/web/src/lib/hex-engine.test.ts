@@ -41,6 +41,14 @@ describe("hex conversion engine", () => {
     expect(new Set(questions.map((question) => question.id)).size).toBe(40);
   });
 
+  it("keeps basic sessions within the two-digit hexadecimal range", () => {
+    const questions = createHexSession(903, 1);
+    expect(questions).toHaveLength(40);
+    expect(questions.every((question) => question.value >= 0 && question.value <= 0xff)).toBe(true);
+    expect(questions.filter((question) => question.direction === "decimal-to-hex")).toHaveLength(20);
+    expect(questions.filter((question) => question.direction === "hex-to-decimal")).toHaveLength(20);
+  });
+
   it("generates deterministic sessions from a seed", () => {
     expect(createHexSession(123456, 4)).toEqual(createHexSession(123456, 4));
   });

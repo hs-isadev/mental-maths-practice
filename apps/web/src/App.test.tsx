@@ -23,4 +23,14 @@ describe("mental maths practice app", () => {
     fireEvent.click(screen.getByRole("button", { name: /^hexadecimal/i }));
     expect(screen.getByText("of 40")).toBeVisible();
   });
+
+  it("lets the user start basic hexadecimal practice limited to 00–FF", () => {
+    render(<App />);
+    const range = screen.getByRole("combobox", { name: /hex range/i });
+    fireEvent.change(range, { target: { value: "basic" } });
+    fireEvent.click(screen.getByRole("button", { name: /^hexadecimal/i }));
+
+    expect(screen.getByText("Basic range · 00–FF")).toBeVisible();
+    expect(screen.getByText("of 40")).toBeVisible();
+  });
 });
