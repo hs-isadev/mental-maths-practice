@@ -24,7 +24,10 @@ interface PracticeSessionProps {
 
 interface Feedback { correct: boolean; answer: number; strategy: string }
 
-const FLASH_DURATION_MS = 500;
+const FLASH_DURATION_MS = 1_500;
+const FLASHABLE_MODES = new Set<PracticeModeId>([
+  "addition", "subtraction", "multiplication", "division", "fractions", "percentages", "powers",
+]);
 
 export function PracticeSession({ questions, mode, level, seed, onComplete, onExit }: PracticeSessionProps) {
   const [index, setIndex] = useState(0);
@@ -126,7 +129,7 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
       <div className="practice-drill-body">
         <section className="practice-question-stage">
           <span className="practice-topic">{descriptor.label} · Level {level}</span>
-          <FlashedQuestion key={question.id} prompt={question.prompt} flash={level === 5} />
+          <FlashedQuestion key={question.id} prompt={question.prompt} flash={level === 5 && FLASHABLE_MODES.has(question.mode)} />
           <form className="conversion-form practice-answer-form" onSubmit={submit}>
             <label htmlFor="practice-answer">Your answer</label>
             <div className="conversion-input"><span aria-hidden="true">=</span><input ref={inputRef} id="practice-answer" autoFocus autoComplete="off" spellCheck={false} inputMode="decimal" aria-invalid={Boolean(validation)} aria-describedby={validation ? "practice-validation" : "practice-instruction"} /><button type="submit" aria-label="Submit answer"><CornerDownLeft /><span>Submit</span></button></div>

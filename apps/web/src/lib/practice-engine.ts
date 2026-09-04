@@ -30,7 +30,7 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
   { id: "subtraction", label: "Subtraction", description: "Positive differences with progressively larger values." },
   { id: "multiplication", label: "Multiplication", description: "Times tables first, then larger factors." },
   { id: "division", label: "Division", description: "Exact whole-number divisions without remainders." },
-  { id: "fractions", label: "Fractions", description: "Find a fraction of a whole number." },
+  { id: "fractions", label: "Fractions", description: "Work with proper and improper fractions." },
   { id: "percentages", label: "Percentages", description: "Common percentages and increasingly varied values." },
   { id: "ratios", label: "Ratios", description: "Split totals into two-part ratios." },
   { id: "powers", label: "Powers", description: "Squares and cubes for quick recall." },
@@ -198,9 +198,11 @@ export function createPracticeSession(seed: number, mode: PracticeModeId, reques
   const schedule: Exclude<PracticeModeId, "mixed">[] = mode === "mixed"
     ? [...MIXED_CATEGORY_IDS, ...MIXED_CATEGORY_IDS]
     : Array.from({ length: PRACTICE_SESSION_LENGTH }, () => mode);
-  for (let index = schedule.length - 1; index > 0; index -= 1) {
-    const swapIndex = integer(random, 0, index);
-    [schedule[index], schedule[swapIndex]] = [schedule[swapIndex]!, schedule[index]!];
+  if (mode === "mixed") {
+    for (let index = schedule.length - 1; index > 0; index -= 1) {
+      const swapIndex = integer(random, 0, index);
+      [schedule[index], schedule[swapIndex]] = [schedule[swapIndex]!, schedule[index]!];
+    }
   }
   let attempts = 0;
   while (questions.length < PRACTICE_SESSION_LENGTH && attempts < 5_000) {
