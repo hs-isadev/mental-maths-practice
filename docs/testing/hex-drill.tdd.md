@@ -1,5 +1,7 @@
 # HEX//DRILL verification record
 
+> Historical record for the first hexadecimal-only slice. Hexadecimal practice was later integrated into the wider Mental Maths app; see `mental-maths-restoration.tdd.md`.
+
 Date: 2026-09-04
 
 ## RED — behavior specified before implementation

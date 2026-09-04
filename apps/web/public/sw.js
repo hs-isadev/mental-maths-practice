@@ -1,4 +1,4 @@
-const CACHE = "hex-drill-shell-v1";
+const CACHE = "mental-maths-shell-v2";
 const SHELL = ["/", "/manifest.webmanifest", "/arena-mark.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));

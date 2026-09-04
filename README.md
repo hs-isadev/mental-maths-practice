@@ -1,8 +1,16 @@
-# HEX//DRILL
+# Mental Maths Practice
 
-A keyboard-first hexadecimal conversion trainer built for timed test practice.
+A keyboard-first practice app that measures accuracy and answer speed, saves progress locally, and adjusts difficulty after complete sessions.
 
-Each session contains exactly 40 unique questions with a balanced 20/20 split between decimal-to-hexadecimal and hexadecimal-to-decimal conversion. The session ends after the fortieth answer or at the hard 20-minute limit.
+## Practice modes
+
+- Addition, subtraction, multiplication, and division
+- Fractions, percentages, ratios, powers, estimation, and applied problems
+- Hexadecimal conversion as an additional dedicated mode
+
+Normal topic sessions contain 20 questions with a 10-minute limit. Hexadecimal sessions contain exactly 40 unique questions with a 20-minute limit: 20 decimal-to-hexadecimal and 20 hexadecimal-to-decimal questions, shuffled together.
+
+Every normal session uses a new cryptographically generated seed, so its values and order change. Challenge links intentionally include a seed so a friend receives the same questions.
 
 ## Run it
 
@@ -11,19 +19,17 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:4173`. A production bundle can be created with `npm run build` and previewed with `npm run preview`.
+Open `http://localhost:4173`. Build the static production version with `npm run build`; the contents of `dist/` can be hosted on any static web host and shared with friends.
 
-## Training model
+## Progress and sharing
 
-- Five value ranges, from 8-bit values through 24-bit values.
-- Deterministic seeded sessions with no duplicate numeric values.
-- Every response is measured with a high-resolution timer.
-- Live accuracy, median correct-answer time, pace marks, streaks, and direction splits.
-- Difficulty can rise only after at least 30 answers with strong accuracy and pace; it drops when accuracy needs rebuilding.
-- Completed sessions and progress history are stored only in the current browser with IndexedDB.
-- Installable PWA shell for offline practice after the first successful load.
-
-Hexadecimal answers accept upper- or lowercase letters and an optional `0x` prefix. Invalid symbols are rejected without consuming a question.
+- Response time is measured for every answer with a high-resolution clock.
+- Accuracy and median correct-answer time are saved per session.
+- Each topic has its own five-level difficulty estimate.
+- A level rises only after a sufficiently complete, accurate, fast session and drops after sustained difficulty.
+- Results remain in the browser's IndexedDB and are never uploaded.
+- The dashboard can share the deployed app URL; result screens can share a reproducible challenge URL.
+- The PWA shell works offline after its first successful load.
 
 ## Quality checks
 
@@ -35,11 +41,4 @@ npm run lint
 npm run build
 ```
 
-The test-first implementation evidence and browser smoke-test notes are recorded in [docs/testing/hex-drill.tdd.md](docs/testing/hex-drill.tdd.md).
-
-## Structure
-
-- `apps/web/src/lib/hex-engine.ts` — conversions, seeded question generation, timing math, scoring, and adaptive rules.
-- `apps/web/src/lib/hex-storage.ts` — local session persistence.
-- `apps/web/src/components/` — dashboard, live drill, reference panel, and session summary.
-- `apps/web/public/` — manifest, app mark, and service worker.
+Implementation evidence is recorded in [docs/testing/mental-maths-restoration.tdd.md](docs/testing/mental-maths-restoration.tdd.md).

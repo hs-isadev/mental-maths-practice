@@ -15,7 +15,7 @@ describe("mental maths practice app", () => {
   it("starts a normal mental maths session without removing hexadecimal practice", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: /^addition/i }));
-    expect(screen.getByText("of 20")).toBeVisible();
+    expect(screen.getByText(/Question 1 of 20/)).toBeVisible();
   });
 
   it("starts the hexadecimal mode as a 40-question session", () => {

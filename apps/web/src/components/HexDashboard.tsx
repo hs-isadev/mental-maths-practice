@@ -36,7 +36,7 @@ export function HexDashboard({ history, level, setLevel, onStart, onClear }: Das
 
       <div className="dashboard-wrap" id="top">
         <section className="dashboard-heading">
-          <div><span className="kicker">Speed protocol 01</span><h1>Convert faster<br /><em>under pressure.</em></h1><p>Bidirectional hexadecimal drills. Forty conversions, twenty minutes, every hesitation measured.</p></div>
+          <div><span className="kicker">Hexadecimal</span><h1>Hexadecimal<br /><em>practice</em></h1><p>Forty conversions in twenty minutes, split evenly in both directions.</p></div>
           <div className="session-specs" aria-label="Session rules"><span className="visually-hidden">40 conversions</span><span className="visually-hidden">20:00 limit</span><span><strong>40</strong><small>conversions</small></span><i /><span><strong>20:00</strong><small>limit</small></span><i /><span><strong>50/50</strong><small>both ways</small></span></div>
         </section>
 

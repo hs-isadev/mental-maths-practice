@@ -41,6 +41,7 @@ export interface HexSessionResult {
   id: string;
   completedAt: string;
   level: number;
+  seed: number;
   durationMs: number;
   timedOut: boolean;
   attempts: HexAttempt[];

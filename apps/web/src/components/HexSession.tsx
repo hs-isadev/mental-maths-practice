@@ -152,6 +152,7 @@ function makeResult(seed: number, level: number, attempts: HexAttempt[], duratio
     id: `hex-session-${seed}-${Date.now()}`,
     completedAt: new Date().toISOString(),
     level,
+    seed,
     durationMs,
     timedOut,
     attempts,
