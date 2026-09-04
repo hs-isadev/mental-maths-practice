@@ -1,0 +1,12 @@
+{
+  "name": "HEX//DRILL Conversion Trainer",
+  "short_name": "HEX//DRILL",
+  "description": "Forty hexadecimal conversions in twenty minutes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#151713",
+  "theme_color": "#151713",
+  "icons": [
+    { "src": "/arena-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

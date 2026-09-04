@@ -1,5 +1,5 @@
 {
-  "name": "mental-maths-arena",
+  "name": "hex-drill",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,19 +12,19 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -b --pretty false",
-    "lint": "eslint apps/web/src packages --max-warnings 0"
+    "lint": "eslint apps/web/src --max-warnings 0"
   },
   "dependencies": {
     "dexie": "^4.0.11",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.1"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.5",
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",

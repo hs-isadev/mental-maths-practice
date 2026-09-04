@@ -15,14 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@arena/domain": ["packages/domain/src/index.ts"],
-      "@arena/questions": ["packages/question-engine/src/index.ts"],
-      "@arena/adaptive": ["packages/adaptive-engine/src/index.ts"],
-      "@arena/analytics": ["packages/analytics/src/index.ts"]
-    },
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["node", "vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["apps/web/src", "packages", "vitest.config.ts", "apps/web/vite.config.ts"]
+  "include": ["apps/web/src", "vitest.config.ts", "apps/web/vite.config.ts"]
 }

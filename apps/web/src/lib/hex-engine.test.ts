@@ -7,7 +7,9 @@ import {
   checkHexAnswer,
   createHexSession,
   decimalToHex,
+  formatDuration,
   hexToDecimal,
+  levelMaximum,
   remainingSessionMs,
   summarizeHexAttempts,
 } from "./hex-engine";
@@ -23,6 +25,13 @@ describe("hex conversion engine", () => {
     fc.assert(fc.property(fc.integer({ min: 0, max: 0xffffff }), (value) => {
       expect(hexToDecimal(decimalToHex(value))).toBe(value);
     }));
+  });
+
+  it("rejects invalid and out-of-range conversions", () => {
+    expect(() => decimalToHex(-1)).toThrow(RangeError);
+    expect(() => decimalToHex(1.5)).toThrow(RangeError);
+    expect(() => hexToDecimal("G1")).toThrow(TypeError);
+    expect(() => hexToDecimal("1000000")).toThrow(RangeError);
   });
 
   it("balances both conversion directions exactly", () => {
@@ -41,6 +50,8 @@ describe("hex conversion engine", () => {
     expect(checkHexAnswer("0xFF", "FF", "decimal-to-hex")).toBe(true);
     expect(checkHexAnswer(" 255 ", "255", "hex-to-decimal")).toBe(true);
     expect(checkHexAnswer("FG", "FF", "decimal-to-hex")).toBe(false);
+    expect(checkHexAnswer("25.5", "255", "hex-to-decimal")).toBe(false);
+    expect(checkHexAnswer("254", "255", "hex-to-decimal")).toBe(false);
   });
 
   it("clamps the hard countdown at zero", () => {
@@ -64,5 +75,13 @@ describe("hex conversion engine", () => {
     expect(summary.medianMs).toBe(3_000);
     expect(summary.byDirection["decimal-to-hex"].accuracy).toBe(.5);
     expect(summary.byDirection["hex-to-decimal"].accuracy).toBe(1);
+  });
+
+  it("formats durations and clamps level bounds for display", () => {
+    expect(formatDuration(61_001)).toBe("01:02");
+    expect(formatDuration(-10)).toBe("00:00");
+    expect(levelMaximum(0)).toBe(0xff);
+    expect(levelMaximum(99)).toBe(0xffffff);
+    expect(summarizeHexAttempts([]).medianMs).toBe(0);
   });
 });
