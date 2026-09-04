@@ -118,13 +118,8 @@ export function createHexSession(seed: number, requestedLevel: number): HexQuest
   }
 
   const directions: HexDirection[] = Array.from({ length: HEX_SESSION_LENGTH }, (_, index) =>
-    index % 2 === 0 ? "decimal-to-hex" : "hex-to-decimal",
+    index < HEX_SESSION_LENGTH / 2 ? "decimal-to-hex" : "hex-to-decimal",
   );
-
-  for (let index = directions.length - 1; index > 0; index -= 1) {
-    const swapIndex = randomInteger(random, 0, index);
-    [directions[index], directions[swapIndex]] = [directions[swapIndex]!, directions[index]!];
-  }
 
   return values.map((value, index) => {
     const direction = directions[index]!;

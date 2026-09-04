@@ -89,7 +89,7 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
 
         <section className="hex-mode-card" aria-labelledby="hex-topic">
           <div className="hex-mode-icon"><Binary /></div>
-          <div><span className="eyebrow">40 questions · 20 minutes</span><h2 id="hex-topic">Hexadecimal</h2><p>20 decimal to hexadecimal and 20 hexadecimal to decimal. Every new session gets a newly randomized set.</p></div>
+          <div><span className="eyebrow">40 questions · 20 minutes</span><h2 id="hex-topic">Hexadecimal</h2><p>First 20: decimal to hexadecimal. Then 20: hexadecimal to decimal. Values are randomized every session.</p></div>
           <label className="hex-range-select" htmlFor="hex-range">
             <span>Hex range</span>
             <select id="hex-range" name="hex-range" value={hexRange} onChange={(event) => setHexRange(event.target.value as "basic" | "adaptive")}>
