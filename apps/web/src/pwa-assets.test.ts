@@ -8,6 +8,12 @@ function read(relativePath: string) {
   return readFileSync(`${webRoot}/${relativePath}`, "utf8");
 }
 
+function pngSize(relativePath: string) {
+  const png = readFileSync(`${webRoot}/${relativePath}`);
+  expect(png.subarray(1, 4).toString("ascii")).toBe("PNG");
+  return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
+}
+
 describe("installable mobile app assets", () => {
   it("provides a standalone manifest with phone-ready icons", () => {
     const manifest = JSON.parse(read("public/manifest.webmanifest")) as {
@@ -27,6 +33,10 @@ describe("installable mobile app assets", () => {
       expect.objectContaining({ src: "/icon-512.png", sizes: "512x512", type: "image/png" }),
       expect.objectContaining({ src: "/icon-maskable-512.png", purpose: "maskable" }),
     ]));
+    expect(pngSize("public/icon-192.png")).toEqual({ width: 192, height: 192 });
+    expect(pngSize("public/icon-512.png")).toEqual({ width: 512, height: 512 });
+    expect(pngSize("public/icon-maskable-512.png")).toEqual({ width: 512, height: 512 });
+    expect(pngSize("public/apple-touch-icon.png")).toEqual({ width: 180, height: 180 });
   });
 
   it("advertises iOS installation and native mobile presentation", () => {
@@ -43,6 +53,7 @@ describe("installable mobile app assets", () => {
     expect(serviceWorker).toContain('"/icon-192.png"');
     expect(serviceWorker).toContain('"/icon-512.png"');
     expect(serviceWorker).toContain('"/apple-touch-icon.png"');
+    expect(serviceWorker).toContain('"__PRECACHE_ASSETS__"');
     expect(serviceWorker).toContain("request.mode === \"navigate\"");
     expect(serviceWorker).toContain('caches.match("/")');
   });
