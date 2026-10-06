@@ -57,7 +57,7 @@ const icons: Record<PracticeModeId, LucideIcon> = {
 
 export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLevel, onStart, onClear, onShareApp }: PracticeDashboardProps) {
   const [shareStatus, setShareStatus] = useState("Share app");
-  const [hexRange, setHexRange] = useState<"basic" | "adaptive">("basic");
+  const [sessionLevel, setSessionLevel] = useState("adaptive");
   const combined = [
     ...practiceHistory.map((result) => ({ id: result.id, completedAt: result.completedAt, label: PRACTICE_MODES.find((mode) => mode.id === result.mode)!.label, level: result.level, attempts: result.summary.attempts, accuracy: result.summary.accuracy, meanMs: result.summary.meanMs, durationMs: result.durationMs })),
     ...hexHistory.map((result) => ({ id: result.id, completedAt: result.completedAt, label: "Hexadecimal", level: result.level, attempts: result.summary.attempts, accuracy: result.summary.accuracy, meanMs: result.summary.meanMs, durationMs: result.durationMs })),
@@ -65,6 +65,16 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
   const totalAnswers = combined.reduce((sum, result) => sum + result.attempts, 0);
   const bestAccuracy = combined.length ? Math.max(...combined.map((result) => result.accuracy)) : 0;
   const latestMean = combined.find((result) => result.meanMs > 0)?.meanMs ?? 0;
+
+  function startAtChosenLevel(mode: PracticeModeId) {
+    const level = sessionLevel === "adaptive" ? levels[mode] : Number(sessionLevel);
+    onStart(mode, { level });
+  }
+
+  function startHexAtChosenLevel() {
+    const level = sessionLevel === "adaptive" ? hexLevel : Number(sessionLevel);
+    onStart("hexadecimal", { level });
+  }
 
   async function shareApp() {
     await onShareApp();
@@ -81,36 +91,31 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
 
       <div className="practice-shell">
         <section className="practice-intro">
-          <div><span className="eyebrow">Practice dashboard</span><h1>Mental maths practice</h1><p>Choose a topic. Each answer is timed, and difficulty adjusts as your results improve.</p></div>
+          <div><span className="eyebrow">Practice dashboard</span><h1>Mental maths practice</h1><p>Choose a topic. Each answer is timed, and difficulty adjusts as your results improve.</p>
+            <label className="session-level-select" htmlFor="session-level"><span>Starting level</span><select id="session-level" value={sessionLevel} onChange={(event) => setSessionLevel(event.target.value)}><option value="adaptive">Adaptive for each topic</option>{[1, 2, 3, 4, 5].map((level) => <option value={level} key={level}>Level {level}</option>)}</select></label>
+          </div>
           <dl><div><dt>Sessions</dt><dd>{combined.length}</dd></div><div><dt>Answers</dt><dd>{totalAnswers}</dd></div><div><dt>Best</dt><dd>{combined.length ? `${Math.round(bestAccuracy * 100)}%` : "—"}</dd></div><div><dt>Average speed</dt><dd>{latestMean ? `${(latestMean / 1_000).toFixed(1)}s` : "—"}</dd></div></dl>
         </section>
 
         <section className="topic-section" aria-labelledby="core-topics">
           <div className="section-heading"><div><span className="eyebrow">20 questions · 10 minutes</span><h2 id="core-topics">Core arithmetic</h2></div><p>Start with the four operations.</p></div>
-          <div className="topic-grid core-grid">{PRACTICE_MODES.slice(0, 4).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} level={levels[mode.id]} icon={icons[mode.id]} onStart={onStart} />)}</div>
+          <div className="topic-grid core-grid">{PRACTICE_MODES.slice(0, 4).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} startLevel={sessionLevel === "adaptive" ? levels[mode.id] : Number(sessionLevel)} icon={icons[mode.id]} onStart={onStart} />)}</div>
         </section>
 
         <section className="topic-section" aria-labelledby="more-topics">
           <div className="section-heading"><div><span className="eyebrow">20 questions · 10 minutes</span><h2 id="more-topics">Foundations & applications</h2></div><p>Practise key foundational skills and word problems.</p></div>
-          <div className="topic-grid">{PRACTICE_MODES.slice(4, 10).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} level={levels[mode.id]} icon={icons[mode.id]} onStart={onStart} />)}</div>
+          <div className="topic-grid">{PRACTICE_MODES.slice(4, 10).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} startLevel={sessionLevel === "adaptive" ? levels[mode.id] : Number(sessionLevel)} icon={icons[mode.id]} onStart={onStart} />)}</div>
         </section>
 
         <section className="topic-section" aria-labelledby="advanced-topics">
           <div className="section-heading"><div><span className="eyebrow">20 questions · 10 minutes</span><h2 id="advanced-topics">Advanced & speed drills</h2></div><p>Physics formulas, fast factorising, quadratic inequalities, and large number tricks.</p></div>
-          <div className="topic-grid">{PRACTICE_MODES.slice(10).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} level={levels[mode.id]} icon={icons[mode.id]} onStart={onStart} />)}</div>
+          <div className="topic-grid">{PRACTICE_MODES.slice(10).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} startLevel={sessionLevel === "adaptive" ? levels[mode.id] : Number(sessionLevel)} icon={icons[mode.id]} onStart={onStart} />)}</div>
         </section>
 
         <section className="hex-mode-card" aria-labelledby="hex-topic">
           <div className="hex-mode-icon"><Binary /></div>
-          <div><span className="eyebrow">40 questions · 20 minutes</span><h2 id="hex-topic">Hexadecimal</h2><p>First 20: decimal to hexadecimal. Then 20: hexadecimal to decimal. Values are randomized every session.</p></div>
-          <label className="hex-range-select" htmlFor="hex-range">
-            <span>Hex range</span>
-            <select id="hex-range" name="hex-range" value={hexRange} onChange={(event) => setHexRange(event.target.value as "basic" | "adaptive")}>
-              <option value="basic">Basic · up to 2 digits (00–FF)</option>
-              <option value="adaptive">Adaptive · Level {hexLevel} ({LEVEL_LABELS[hexLevel - 1]})</option>
-            </select>
-          </label>
-          <button onClick={() => onStart("hexadecimal", { level: hexRange === "basic" ? 1 : hexLevel })} aria-label="Hexadecimal. Start 40-question session">Start</button>
+          <div><span className="eyebrow">40 questions · 20 minutes</span><h2 id="hex-topic">Hexadecimal</h2><p>First 20: decimal to hexadecimal. Then 20: hexadecimal to decimal. Level 1 covers two-digit values; higher levels expand the range.</p></div>
+          <button onClick={startHexAtChosenLevel} aria-label={`Hexadecimal. Start 40-question session at ${sessionLevel === "adaptive" ? `level ${hexLevel}, ${LEVEL_LABELS[hexLevel - 1]}` : `level ${sessionLevel}`}`}>Start · Level {sessionLevel === "adaptive" ? hexLevel : sessionLevel}</button>
         </section>
 
         <section className="recent-practice" aria-labelledby="recent-title">
@@ -123,6 +128,6 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
   );
 }
 
-function TopicCard({ mode, label, description, level, icon: Icon, onStart }: { mode: PracticeModeId; label: string; description: string; level: number; icon: LucideIcon; onStart: (mode: ChallengeMode, options?: { level: number }) => void }) {
-  return <button className="topic-card" onClick={() => onStart(mode)} aria-label={`${label}. Start 20-question session`}><span className="topic-icon"><Icon /></span><span className="topic-copy"><strong>{label}</strong><small>{description}</small></span><span className="topic-level"><small>LEVEL</small>{level}</span><ChevronRight /></button>;
+function TopicCard({ mode, label, description, startLevel, icon: Icon, onStart }: { mode: PracticeModeId; label: string; description: string; startLevel: number; icon: LucideIcon; onStart: (mode: ChallengeMode, options?: { level: number }) => void }) {
+  return <button className="topic-card" onClick={() => onStart(mode, { level: startLevel })} aria-label={`${label}. Start 20-question session at level ${startLevel}`}><span className="topic-icon"><Icon /></span><span className="topic-copy"><strong>{label}</strong><small>{description}</small></span><span className="topic-level"><small>START</small>{startLevel}</span><ChevronRight /></button>;
 }

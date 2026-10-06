@@ -41,7 +41,7 @@ export function PracticeSummary({ result, onHome, onRetry, onShare }: PracticeSu
               <X />
               <span>
                 <small>{attempt.prompt}</small>
-                <strong>{attempt.expectedAnswer?.toLocaleString()}</strong>
+                <strong>{Array.isArray(attempt.expectedAnswer) ? attempt.expectedAnswer.join(", ") : attempt.expectedAnswer?.toLocaleString()}</strong>
                 {attempt.strategy && <small className="review-shortcut">💡 {attempt.strategy}</small>}
               </span>
             </article>

@@ -5,7 +5,7 @@ import {
   getPracticeMode,
   remainingPracticeMs,
   summarizePracticeAttempts,
-  verifyPracticeAnswer,
+  verifyAllAnswers,
   type PracticeAttempt,
   type PracticeModeId,
   type PracticeQuestion,
@@ -22,7 +22,7 @@ interface PracticeSessionProps {
   onExit: () => void;
 }
 
-interface Feedback { correct: boolean; answer: number; strategy: string }
+interface Feedback { correct: boolean; answer: string; strategy: string }
 
 const FLASH_DURATION_MS = 1_500;
 const FLASHABLE_MODES = new Set<PracticeModeId>([
@@ -74,16 +74,20 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
     const input = inputRef.current;
     if (!input || feedback || finished.current) return;
     const answer = input.value.trim();
-    if (!/^-?[\d,]+(?:\.\d+)?$/.test(answer)) {
-      setValidation("Enter a number only.");
+    const hasMultipleAnswers = (question.answers?.length ?? 0) > 1;
+    const validAnswerShape = hasMultipleAnswers
+      ? /^-?\d+(?:\.\d+)?(?:[,;\s]+-?\d+(?:\.\d+)?)+$/.test(answer)
+      : /^-?[\d,]+(?:\.\d+)?$/.test(answer);
+    if (!validAnswerShape) {
+      setValidation(hasMultipleAnswers ? "Enter every solution as a number, separated by commas." : "Enter a number only.");
       return;
     }
 
-    const correct = verifyPracticeAnswer(answer, question);
+    const correct = verifyAllAnswers(answer, question.answers && question.answers.length > 1 ? question.answers : [question.answer]);
     const attempt: PracticeAttempt = {
       questionId: question.id,
       prompt: question.prompt,
-      expectedAnswer: question.answer,
+      expectedAnswer: hasMultipleAnswers ? question.answers : question.answer,
       submittedAnswer: answer,
       strategy: question.strategy,
       correct,
@@ -93,7 +97,12 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
     attemptsRef.current = nextAttempts;
     setAttempts(nextAttempts);
     setValidation("");
-    setFeedback({ correct, answer: question.answer, strategy: question.strategy });
+    const expectedAnswers = hasMultipleAnswers ? question.answers! : [question.answer];
+    setFeedback({
+      correct,
+      answer: expectedAnswers.map((value) => value.toLocaleString(undefined, { maximumFractionDigits: 4 })).join(", "),
+      strategy: question.strategy,
+    });
     input.value = "";
 
     advanceTimer.current = window.setTimeout(() => {
@@ -135,8 +144,8 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
           <FlashedQuestion key={question.id} prompt={question.prompt} flash={level === 5 && FLASHABLE_MODES.has(question.mode)} />
           <form className="conversion-form practice-answer-form" onSubmit={submit}>
             <label htmlFor="practice-answer">Your answer</label>
-            <div className="conversion-input"><span aria-hidden="true">=</span><input ref={inputRef} id="practice-answer" autoFocus autoComplete="off" spellCheck={false} inputMode="decimal" aria-invalid={Boolean(validation)} aria-describedby={validation ? "practice-validation" : "practice-instruction"} /><button type="submit" aria-label="Submit answer"><CornerDownLeft /><span>Submit</span></button></div>
-            {validation ? <p id="practice-validation" className="validation" role="alert">{validation}</p> : <p id="practice-instruction"><kbd>ENTER</kbd> submits your answer</p>}
+            <div className="conversion-input"><span aria-hidden="true">=</span><input ref={inputRef} id="practice-answer" autoFocus autoComplete="off" spellCheck={false} inputMode={question.answers && question.answers.length > 1 ? "text" : "decimal"} aria-invalid={Boolean(validation)} aria-describedby={validation ? "practice-validation" : "practice-instruction"} /><button type="submit" aria-label="Submit answer"><CornerDownLeft /><span>Submit</span></button></div>
+            {validation ? <p id="practice-validation" className="validation" role="alert">{validation}</p> : <p id="practice-instruction">{question.answers && question.answers.length > 1 ? "Enter every solution, separated by commas (for example: -9, 10)." : <><kbd>ENTER</kbd> submits your answer</>}</p>}
           </form>
           <div className="practice-tip-container">
             <button type="button" className="practice-tip-toggle" onClick={() => setShowTip((prev) => !prev)}>
@@ -154,7 +163,7 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
         </aside>
       </div>
 
-      {feedback && <div className={feedback.correct ? "answer-feedback correct" : "answer-feedback wrong"} role="status" aria-live="assertive"><span className="feedback-icon">{feedback.correct ? <Check /> : <X />}</span><div><small>{feedback.correct ? "CORRECT" : `ANSWER · ${feedback.answer.toLocaleString()}`}</small><strong>{feedback.correct ? "Next question" : feedback.strategy}</strong></div></div>}
+      {feedback && <div className={feedback.correct ? "answer-feedback correct" : "answer-feedback wrong"} role="status" aria-live="assertive"><span className="feedback-icon">{feedback.correct ? <Check /> : <X />}</span><div><small>{feedback.correct ? "CORRECT" : `ANSWER · ${feedback.answer}`}</small><strong>{feedback.correct ? "Next question" : feedback.strategy}</strong></div></div>}
       <footer className="drill-footer"><span><Command />ESC to exit</span><span><Clock3 />Each answer is timed</span></footer>
     </main>
   );

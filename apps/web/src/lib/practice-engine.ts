@@ -1,6 +1,15 @@
 export const PRACTICE_SESSION_LENGTH = 20;
 export const PRACTICE_SESSION_DURATION_MS = 10 * 60 * 1_000;
 
+// Configurable level parameters - makes levels changeable
+const PRACTICE_LEVEL_CONFIG = {
+  1: { minMax: [20, 100], desc: "Basic addition/subtraction" },
+  2: { minMax: [100, 500], desc: "Intermediate calculations" },
+  3: { minMax: [500, 2_000], desc: "Advanced arithmetic" },
+  4: { minMax: [2_000, 10_000], desc: "High-level math" },
+  5: { minMax: [10_000, 50_000], desc: "Mastery level" },
+};
+
 export type PracticeModeId =
   | "addition"
   | "subtraction"
@@ -17,7 +26,6 @@ export type PracticeModeId =
   | "quadratic-inequalities"
   | "physics"
   | "mixed";
-
 const MIXED_CATEGORY_IDS = [
   "addition", "subtraction", "multiplication", "division", "fractions",
   "percentages", "ratios", "powers", "estimation", "applied",
@@ -43,7 +51,7 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
   { id: "decimals-large-numbers", label: "Decimals & large numbers", description: "Mental tricks for decimals, base 100, and large products." },
   { id: "fast-factorising", label: "Fast factorising", description: "Quadratic roots, difference of squares, and factor shortcuts." },
   { id: "quadratic-inequalities", label: "Quadratic inequalities", description: "Critical values, boundary roots, and integer solution counts." },
-  { id: "physics", label: "Physics calculations", description: "Speed, force, work, energy, and circuit formulas with speed tips." },
+  { id: "physics", label: "Physics scenarios", description: "Work through real situations, units, and useful distractions." },
   { id: "mixed", label: "General maths", description: "A shuffled mix with two questions from every topic." },
 ] as const;
 
@@ -53,14 +61,14 @@ export interface PracticeQuestion {
   mode: PracticeModeId;
   prompt: string;
   answer: number;
+  answers?: number[];
   strategy: string;
   level: number;
 }
-
 export interface PracticeAttempt {
   questionId?: string;
   prompt?: string;
-  expectedAnswer?: number;
+  expectedAnswer?: number | number[];
   submittedAnswer?: string;
   strategy?: string;
   correct: boolean;
@@ -120,9 +128,171 @@ function greatestCommonDivisor(a: number, b: number): number {
   return left;
 }
 
+export type PracticeLevelConfig = Record<number, {
+  minMax: [number, number];
+  desc: string;
+  params?: Record<string, unknown>;
+}>;
+
+export const PRACTICE_LEVEL_CONFIGS: PracticeLevelConfig = {
+  1: { minMax: [20, 100], desc: "Basic addition/subtraction", params: { factorMax: 6, decimalPlaces: 1 } },
+  2: { minMax: [100, 500], desc: "Intermediate calculations", params: { factorMax: 12, decimalPlaces: 2 } },
+  3: { minMax: [500, 2_000], desc: "Advanced arithmetic", params: { factorMax: 20, decimalPlaces: 2 } },
+  4: { minMax: [2_000, 10_000], desc: "High-level math", params: { factorMax: 30, decimalPlaces: 3 } },
+  5: { minMax: [10_000, 50_000], desc: "Mastery level", params: { factorMax: 100, decimalPlaces: 3 } },
+};
+
+export function updateLevelConfig(config: Partial<PracticeLevelConfig>): void {
+  Object.assign(PRACTICE_LEVEL_CONFIGS, config);
+}
+
+export function getLevelConfig(level: number): {
+  minMax: [number, number];
+  desc: string;
+  params: Record<string, unknown>;
+} {
+  return PRACTICE_LEVEL_CONFIGS[Math.min(level, 5) as 1 | 2 | 3 | 4 | 5] ?? PRACTICE_LEVEL_CONFIGS[1]!;
+}
+
+function allRoots(
+  mode: Exclude<PracticeModeId, "mixed">,
+  equation: string,
+  roots: number[],
+  strategy: string,
+  level: number,
+): Omit<PracticeQuestion, "id" | "ordinal"> {
+  const answers = [...roots].sort((left, right) => left - right);
+  return {
+    mode,
+    prompt: `Solve ${equation}. Enter all solutions, separated by commas.`,
+    answer: answers[0]!,
+    answers,
+    strategy,
+    level,
+  };
+}
+
+function generatePhysicsQuestion(
+  random: () => number,
+  level: number,
+): Omit<PracticeQuestion, "id" | "ordinal"> {
+  const type = integer(random, 0, 3);
+  if (level === 1) {
+    if (type === 0) {
+      const [distance, movingSeconds, waitSeconds, average] = choose(random, [[240, 40, 20, 4], [300, 50, 10, 5], [360, 40, 20, 6], [180, 30, 30, 3]] as const);
+      return { mode: "physics", prompt: `A minibus travels ${distance} m in ${movingSeconds} s, then waits ${waitSeconds} s at a crossing. The route is marked 30 km/h. What is its average speed over the full journey, in m/s?`, answer: average, strategy: `Average speed uses the full elapsed time, including the wait: ${distance} ÷ (${movingSeconds} + ${waitSeconds}) = ${average} m/s.`, level };
+    }
+    if (type === 1) {
+      const [cart, load, changeInSpeed, seconds, force] = choose(random, [[22, 18, 8, 4, 80], [15, 25, 12, 6, 80], [30, 10, 6, 3, 80], [18, 12, 10, 5, 60]] as const);
+      return { mode: "physics", prompt: `A ${cart} kg delivery cart carries a ${load} kg load. It speeds up from rest by ${changeInSpeed} m/s in ${seconds} s. What average resultant force acts on the loaded cart?`, answer: force, strategy: `Total mass = ${cart} + ${load} = ${cart + load} kg; acceleration = ${changeInSpeed} ÷ ${seconds} = ${changeInSpeed / seconds} m/s²; F = ma = ${cart + load} × ${changeInSpeed / seconds} = ${force} N.`, level };
+    }
+    if (type === 2) {
+      const mass = choose(random, [4, 6, 8, 12]);
+      const tagMass = choose(random, [0.2, 0.5, 0.8]);
+      return { mode: "physics", prompt: `A ${mass} kg equipment case is weighed on Earth, where g = 10 N/kg. A ${tagMass} kg tag belongs to a different case. What is this case's weight, in N?`, answer: mass * 10, strategy: `Ignore the other case and use W = mg = ${mass} × 10 = ${mass * 10} N.`, level };
+    }
+    const count = choose(random, [2, 3]);
+    const current = choose(random, [1, 2, 3]);
+    return { mode: "physics", prompt: `${count} identical lamps are connected in parallel to a 12 V supply. Each lamp draws ${current} A. A spare lamp is disconnected. What current leaves the supply?`, answer: count * current, strategy: `Add the currents in the ${count} connected parallel branches: ${count} × ${current} = ${count * current} A.`, level };
+  }
+
+  if (level === 2) {
+    if (type === 0) {
+      const force = choose(random, [30, 40, 45, 60]);
+      const distance = choose(random, [5, 6, 8, 10]);
+      const slack = choose(random, [1, 2]);
+      return { mode: "physics", prompt: `A warehouse worker pulls a crate with a steady ${force} N force over ${distance + slack} m. The rope is slack for the first ${slack} m. How much work does the pull do?`, answer: force * distance, strategy: `Work uses the distance while the force acts: ${force} × (${distance + slack} − ${slack}) = ${force * distance} J.`, level };
+    }
+    if (type === 1) {
+      const [length, width, height, density] = choose(random, [[5, 2, 3, 8], [4, 3, 2, 6], [6, 2, 2, 9], [5, 4, 2, 3]] as const);
+      const volume = length * width * height;
+      const mass = volume * density;
+      const tray = choose(random, [30, 40, 50]);
+      return { mode: "physics", prompt: `A metal sample has a mass of ${mass} g. Its rectangular dimensions are ${length} cm by ${width} cm by ${height} cm; the tray it arrived in has a mass of ${tray} g. Find the sample's density in g/cm³.`, answer: density, strategy: `Ignore the tray mass. Sample volume = ${length} × ${width} × ${height} = ${volume} cm³; density = ${mass} ÷ ${volume} = ${density} g/cm³.`, level };
+    }
+    if (type === 2) {
+      const [mass, speed, seconds, force] = choose(random, [[800, 15, 4, 3000], [1200, 15, 3, 6000], [1000, 12, 3, 4000], [1500, 20, 5, 6000]] as const);
+      const tripMinutes = choose(random, [8, 12, 25]);
+      return { mode: "physics", prompt: `A ${mass} kg car travelling at ${speed} m/s comes to rest in ${seconds} s. Its dashboard says the trip began ${tripMinutes} minutes ago. What is the magnitude of the average braking force?`, answer: force, strategy: `The trip time is irrelevant. Deceleration magnitude = ${speed} ÷ ${seconds} = ${speed / seconds} m/s²; force magnitude = ${mass} × ${speed / seconds} = ${force} N.`, level };
+    }
+    const [voltage, firstR, secondR] = choose(random, [[12, 4, 2], [18, 6, 3], [9, 2, 1], [24, 8, 4]] as const);
+    const spare = choose(random, [3, 5, 7]);
+    return { mode: "physics", prompt: `A ${voltage} V battery is connected to two resistors in series, ${firstR} Ω and ${secondR} Ω. A spare ${spare} Ω resistor is not connected. What current flows through the circuit?`, answer: voltage / (firstR + secondR), strategy: `Only the series resistors count: total resistance = ${firstR} + ${secondR} = ${firstR + secondR} Ω; I = ${voltage} ÷ ${firstR + secondR} = ${voltage / (firstR + secondR)} A.`, level };
+  }
+
+  if (level === 3) {
+    if (type === 0) {
+      const [mass, height, loss] = choose(random, [[400, 12.5, 20], [600, 10, 25], [800, 7.5, 20], [500, 12, 30]] as const);
+      const lostGpe = mass * 10 * height;
+      const gainedKinetic = lostGpe * (100 - loss) / 100;
+      return { mode: "physics", prompt: `A ${mass} kg coaster car starts from rest and drops ${height} m. Take g = 10 m/s². Track friction dissipates ${loss}% of the lost gravitational energy. How much kinetic energy does the car gain?`, answer: gainedKinetic, strategy: `Lost GPE = ${mass} × 10 × ${height} = ${lostGpe} J. The car retains ${100 - loss}%: ${100 - loss}% × ${lostGpe} = ${gainedKinetic} J.`, level };
+    }
+    if (type === 1) {
+      const [mass, rise, efficiency] = choose(random, [[1.5, 20, 80], [2, 15, 80], [1, 30, 80], [2.5, 12, 80]] as const);
+      const usefulKj = mass * 4.2 * rise;
+      const inputKj = usefulKj / (efficiency / 100);
+      return { mode: "physics", prompt: `A ${mass} kg flask of water is heated by ${rise}°C. Use c = 4,200 J/(kg·°C). The heater is ${efficiency}% efficient. How much electrical energy must it receive, in kJ?`, answer: inputKj, strategy: `Useful heat = ${mass} × 4.2 × ${rise} = ${usefulKj} kJ. Input energy = ${usefulKj} ÷ ${efficiency / 100} = ${inputKj} kJ.`, level };
+    }
+    if (type === 2) {
+      const [voltage, lampR, r1, r2] = choose(random, [[24, 12, 6, 6], [18, 9, 3, 6], [12, 6, 4, 8], [30, 15, 5, 10]] as const);
+      const current = voltage / lampR + voltage / (r1 + r2);
+      return { mode: "physics", prompt: `A ${voltage} V supply powers two parallel branches. One branch has a ${lampR} Ω lamp; the other has ${r1} Ω and ${r2} Ω resistors in series. What total current does the supply provide?`, answer: current, strategy: `The series branch has ${r1 + r2} Ω. Branch currents are ${voltage} ÷ ${lampR} = ${voltage / lampR} A and ${voltage} ÷ ${r1 + r2} = ${voltage / (r1 + r2)} A; total = ${current} A.`, level };
+    }
+    const [standWeight, signWeight, feet, area] = choose(random, [[500, 20, 4, 5], [360, 40, 4, 4], [600, 0, 3, 10], [420, 60, 4, 6]] as const);
+    const pressure = (standWeight + signWeight) / feet / area;
+    return { mode: "physics", prompt: `A ${standWeight} N display stand rests on ${feet} identical feet. Each foot touches the floor over ${area} cm². A ${signWeight} N sign is mounted on the stand. What pressure does each foot exert, in N/cm²?`, answer: pressure, strategy: `Total force = ${standWeight} + ${signWeight} = ${standWeight + signWeight} N. Each foot supports ${(standWeight + signWeight) / feet} N over ${area} cm², so pressure = ${pressure} N/cm².`, level };
+  }
+
+  if (level === 4) {
+    if (type === 0) {
+      const [mass, speedKmh, seconds] = choose(random, [[1200, 72, 4], [1000, 54, 3], [1500, 90, 5], [800, 36, 2]] as const);
+      const speed = speedKmh / 3.6;
+      const force = mass * speed / seconds;
+      return { mode: "physics", prompt: `A ${mass} kg car brakes uniformly from ${speedKmh} km/h to rest in ${seconds} s. The driver's reaction delay happened before braking and is not part of this time. Find the average braking force magnitude.`, answer: force, strategy: `Convert ${speedKmh} km/h to ${speed} m/s. Braking acceleration magnitude = ${speed} ÷ ${seconds} = ${speed / seconds} m/s²; F = ${mass} × ${speed / seconds} = ${force} N.`, level };
+    }
+    if (type === 1) {
+      const [voltage, measuredCurrent, otherResistance] = choose(random, [[12, 2, 3], [18, 3, 6], [24, 4, 4], [15, 2.5, 5]] as const);
+      const totalCurrent = measuredCurrent + voltage / otherResistance;
+      return { mode: "physics", prompt: `A ${voltage} V battery powers two parallel branches. A technician measures ${measuredCurrent} A in one branch; the other branch has resistance ${otherResistance} Ω. What total current leaves the battery?`, answer: totalCurrent, strategy: `The other branch draws ${voltage} ÷ ${otherResistance} = ${voltage / otherResistance} A. Add the measured current: ${measuredCurrent} + ${voltage / otherResistance} = ${totalCurrent} A.`, level };
+    }
+    if (type === 2) {
+      const [speed, roundTrip] = choose(random, [[1500, 0.8], [1480, 1], [1500, 1.2], [1480, 0.5]] as const);
+      const depth = speed * roundTrip / 2;
+      return { mode: "physics", prompt: `A sonar pulse travels through seawater at ${speed} m/s and returns to a research boat ${roundTrip} s after transmission. How far away is the seabed?`, answer: depth, strategy: `The pulse travels down and back: total path = ${speed} × ${roundTrip} = ${speed * roundTrip} m. One-way distance = ${speed * roundTrip} ÷ 2 = ${depth} m.`, level };
+    }
+    const [acceleration, distance, speed] = choose(random, [[2, 25, 10], [4, 12.5, 10], [2, 50, Math.sqrt(200)], [8, 6.25, 10]] as const);
+    return { mode: "physics", prompt: `A cyclist accelerates uniformly from rest down a ${distance} m straight section at ${acceleration} m/s². A marker shows the full route is 100 m, but the cyclist has not reached it yet. What speed has the cyclist reached after this section?`, answer: speed, strategy: `Use v² = u² + 2as for this section: v² = 0 + 2 × ${acceleration} × ${distance} = ${2 * acceleration * distance}; v = ${speed} m/s.`, level };
+  }
+
+  if (type === 0) {
+    const [speedKmh, reactionSeconds, deceleration] = choose(random, [[90, 1.2, 5], [72, 1, 4], [108, 1.5, 6], [54, 1.2, 3]] as const);
+    const speed = speedKmh / 3.6;
+    const reactionDistance = speed * reactionSeconds;
+    const brakingDistance = speed * speed / (2 * deceleration);
+    const stoppingDistance = reactionDistance + brakingDistance;
+    return { mode: "physics", prompt: `On a dry road, a driver travels at ${speedKmh} km/h. Reaction time is ${reactionSeconds} s and braking deceleration is ${deceleration} m/s². A roadside sign shows a 70 km/h limit. Estimate the total stopping distance from first seeing the hazard.`, answer: stoppingDistance, strategy: `Convert speed to ${speed} m/s. Reaction distance = ${speed} × ${reactionSeconds} = ${reactionDistance} m. Braking distance = v² ÷ (2a) = ${speed * speed} ÷ ${2 * deceleration} = ${brakingDistance} m. Total = ${stoppingDistance} m.`, level };
+  }
+  if (type === 1) {
+    const [inputMj, outputKj, label] = choose(random, [[1.2, 720, 65], [0.9, 540, 55], [1.5, 900, 70], [2, 1200, 58]] as const);
+    const efficiency = outputKj / (inputMj * 1000) * 100;
+    return { mode: "physics", prompt: `A small generator receives ${inputMj} MJ of chemical energy and delivers ${outputKj} kJ of useful electrical energy. A label claims ${label}% efficiency. What is the efficiency from these measurements?`, answer: efficiency, strategy: `Convert ${inputMj} MJ to ${inputMj * 1000} kJ. Efficiency = (${outputKj} ÷ ${inputMj * 1000}) × 100 = ${efficiency}%; the label is a distractor.`, level };
+  }
+  if (type === 2) {
+    const [hotMass, hotTemp, coldMass, coldTemp] = choose(random, [[2, 80, 3, 20], [1, 90, 2, 30], [3, 70, 2, 25], [2, 75, 4, 25]] as const);
+    const finalTemp = (hotMass * hotTemp + coldMass * coldTemp) / (hotMass + coldMass);
+    return { mode: "physics", prompt: `A ${hotMass} kg hot-water pack at ${hotTemp}°C is mixed with ${coldMass} kg of water at ${coldTemp}°C in a perfectly insulated container. Assume equal specific heat capacities and no heat loss. What is the final temperature?`, answer: finalTemp, strategy: `Equal specific heats cancel. Final temperature = (${hotMass} × ${hotTemp} + ${coldMass} × ${coldTemp}) ÷ (${hotMass} + ${coldMass}) = ${finalTemp}°C.`, level };
+  }
+  const [primaryV, secondaryV, secondaryA, efficiency] = choose(random, [[240, 12, 4, 80], [120, 12, 5, 75], [230, 23, 4, 80], [200, 20, 5, 80]] as const);
+  const inputPower = secondaryV * secondaryA / (efficiency / 100);
+  const primaryCurrent = inputPower / primaryV;
+  return { mode: "physics", prompt: `A transformer steps ${primaryV} V down to ${secondaryV} V. It supplies a ${secondaryA} A lamp and is ${efficiency}% efficient. What current does it draw from the high-voltage supply?`, answer: primaryCurrent, strategy: `Output power = ${secondaryV} × ${secondaryA} = ${secondaryV * secondaryA} W. Input power = ${secondaryV * secondaryA} ÷ ${efficiency / 100} = ${inputPower} W. Primary current = ${inputPower} ÷ ${primaryV} = ${primaryCurrent} A.`, level };
+}
+
 function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "mixed">, level: number): Omit<PracticeQuestion, "id" | "ordinal"> {
   const maximums = [20, 100, 500, 2_000, 10_000];
   const maximum = maximums[level - 1] ?? maximums[0]!;
+
+  if (mode === "physics") return generatePhysicsQuestion(random, level);
 
   if (mode === "addition") {
     const a = integer(random, 1, maximum);
@@ -200,7 +370,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
     return { mode, prompt: `Pay £${paid} for items costing £${a * b}. Change?`, answer: paid - a * b, strategy: "Subtract the cost from the amount paid.", level };
   }
 
-  if (mode === "physics") {
+  if (mode === "physics" && level === 0) {
     if (level === 1) {
       const type = integer(random, 0, 3);
       if (type === 0) {
@@ -320,6 +490,45 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const lambda = choose(random, [0.5, 0.6, 0.8, 1.2, 1.5]);
       const v = Math.round(f * lambda);
       return { mode, prompt: `Wave speed: f = ${f} Hz, λ = ${lambda} m. Find v (m/s)`, answer: v, strategy: `v = fλ: ${f} × ${lambda} = ${v} m/s.`, level };
+    if (level === 4) {
+      const type = integer(random, 0, 5);
+      if (type === 0) {
+        if (integer(random, 0, 1) === 0) {
+          const v_ms = choose(random, [10, 15, 20, 25, 30, 35, 40]);
+          const v_kmh = Math.round(v_ms * 3.6);
+          return { mode, prompt: `Convert ${v_kmh} km/h to m/s`, answer: v_ms, strategy: `Divide by 3.6: note that 36 km/h = 10 m/s, so ${v_kmh} km/h = ${v_ms} m/s.`, level };
+        }
+        const v_ms = choose(random, [5, 15, 20, 25, 30]);
+        const v_kmh = Math.round(v_ms * 3.6);
+        return { mode, prompt: `Convert ${v_ms} m/s to km/h`, answer: v_kmh, strategy: `Multiply by 3.6: ${v_ms} × 3 + 0.6 × ${v_ms} = ${v_kmh} km/h.`, level };
+      }
+      if (type === 1) {
+        const pairs = [
+          [6, 3, 2], [12, 4, 3], [12, 6, 4], [20, 5, 4], [30, 6, 5],
+          [20, 20, 10], [15, 10, 6], [24, 8, 6], [40, 10, 8], [60, 20, 15],
+        ] as const;
+        const [r1, r2, req] = choose(random, pairs);
+        return { mode, prompt: `Parallel resistors: R₁ = ${r1} Ω, R₂ = ${r2} Ω. Find Req (Ω)`, answer: req, strategy: `Product over sum: (${r1} × ${r2}) / (${r1} + ${r2}) = ${r1 * r2} / ${r1 + r2} = ${req} Ω.`, level };
+      }
+      if (type === 2) {
+        const triples = [
+          [2, 25, 10], [4, 18, 12], [5, 10, 10], [3, 24, 12],
+          [8, 16, 16], [4, 32, 16], [10, 20, 20], [6, 12, 12],
+        ] as const;
+        const [a, s, v] = choose(random, triples);
+        return { mode, prompt: `Speed from rest (u = 0): a = ${a} m/s², s = ${s} m. Find v (m/s)`, answer: v, strategy: `v² = 2as: 2 × ${a} × ${s} = ${2 * a * s}; √${2 * a * s} = ${v} m/s.`, level };
+      }
+      const f = choose(random, [200, 250, 400, 500, 600, 800]);
+      const lambda = choose(random, [0.5, 0.6, 0.8, 1.2, 1.5]);
+      const v = Math.round(f * lambda);
+      return { mode, prompt: `Wave speed: f = ${f} Hz, λ = ${lambda} m. Find v (m/s)`, answer: v, strategy: `v = fλ: ${f} × ${lambda} = ${v} m/s.`, level };
+      }
+      const cases = [
+        [800, 15, 4, 3000], [1000, 20, 5, 4000], [1200, 20, 4, 6000],
+        [600, 25, 5, 3000], [1500, 10, 3, 5000], [800, 25, 5, 4000],
+      ] as const;
+      const [m, dv, t, F] = choose(random, cases);
+      return { mode, prompt: `Average braking force: m = ${m} kg, Δv = ${dv} m/s, t = ${t} s. Find F (N)`, answer: F, strategy: `F = m(Δv)/t: (${m} × ${dv}) ÷ ${t} = ${m * dv} ÷ ${t} = ${F} N.`, level };
     }
     const type = integer(random, 0, 3);
     if (type === 0) {
@@ -350,8 +559,8 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const a = integer(random, 1, 5);
       const b = integer(random, a + 2, a + 8);
       const type = integer(random, 0, 3);
-      if (type === 0) return { mode, prompt: `Upper boundary root of (x - ${a})(x - ${b}) < 0`, answer: b, strategy: `Parabola opens upwards; roots are ${a} and ${b}. Upper root is ${b}.`, level };
-      if (type === 1) return { mode, prompt: `Lower boundary root of (x - ${a})(x - ${b}) > 0`, answer: a, strategy: `Roots are ${a} and ${b}. Lower critical value is ${a}.`, level };
+      if (type === 0) return allRoots(mode, `(x - ${a})(x - ${b}) = 0`, [a, b], `The boundary values are x = ${a} and x = ${b}.`, level);
+      if (type === 1) return allRoots(mode, `(x - ${a})(x - ${b}) = 0`, [a, b], `The boundary values are x = ${a} and x = ${b}.`, level);
       if (type === 2) return { mode, prompt: `Smallest integer satisfying (x - ${a})(x - ${b}) < 0`, answer: a + 1, strategy: `Inequality holds strictly between ${a} and ${b}: smallest integer is ${a} + 1 = ${a + 1}.`, level };
       return { mode, prompt: `Largest integer satisfying (x - ${a})(x - ${b}) < 0`, answer: b - 1, strategy: `Inequality holds strictly between ${a} and ${b}: largest integer is ${b} - 1 = ${b - 1}.`, level };
     }
@@ -361,8 +570,8 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const S = a + b;
       const P = a * b;
       const type = integer(random, 0, 3);
-      if (type === 0) return { mode, prompt: `Upper bound of x for x² - ${S}x + ${P} < 0`, answer: b, strategy: `Factor to (x - ${a})(x - ${b}) < 0; roots are ${a} and ${b}. Upper root is ${b}.`, level };
-      if (type === 1) return { mode, prompt: `Lower bound of x for x² - ${S}x + ${P} ≤ 0`, answer: a, strategy: `Factor to (x - ${a})(x - ${b}) ≤ 0; roots are ${a} and ${b}. Lower root is ${a}.`, level };
+      if (type === 0) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], `Factor as (x - ${a})(x - ${b}) = 0; the solutions are ${a} and ${b}.`, level);
+      if (type === 1) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], `Factor as (x - ${a})(x - ${b}) = 0; the solutions are ${a} and ${b}.`, level);
       if (type === 2) return { mode, prompt: `Number of integer solutions to x² - ${S}x + ${P} ≤ 0`, answer: b - a + 1, strategy: `Roots ${a} and ${b} inclusive: count = ${b} - ${a} + 1 = ${b - a + 1}.`, level };
       const r = integer(random, 3, 10);
       return { mode, prompt: `Smallest integer satisfying x² ≤ ${r * r}`, answer: -r, strategy: `x² ≤ ${r * r} means -${r} ≤ x ≤ ${r}; minimum integer is -${r}.`, level };
@@ -377,7 +586,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 0) return { mode, prompt: `Smallest integer satisfying ${quadStr} ≤ 0`, answer: -a, strategy: `Factors to (x + ${a})(x - ${b}) ≤ 0: interval [ -${a}, ${b} ]; smallest integer is -${a}.`, level };
       if (type === 1) return { mode, prompt: `Largest integer satisfying ${quadStr} < 0`, answer: b - 1, strategy: `Factors to (x + ${a})(x - ${b}) < 0: open interval (-${a}, ${b}); largest integer is ${b} - 1 = ${b - 1}.`, level };
       if (type === 2) return { mode, prompt: `Number of integer solutions to ${quadStr} ≤ 0`, answer: b + a + 1, strategy: `Inclusive integer solutions from -${a} to ${b}: count = ${b} - (-${a}) + 1 = ${b + a + 1}.`, level };
-      return { mode, prompt: `Lower boundary root of ${quadStr} ≤ 0`, answer: -a, strategy: `Roots are -${a} and ${b}; lower root is -${a}.`, level };
+      return allRoots(mode, `${quadStr} = 0`, [-a, b], `Factor as (x + ${a})(x - ${b}) = 0; the solutions are -${a} and ${b}.`, level);
     }
     if (level === 4) {
       const type = integer(random, 0, 2);
@@ -389,7 +598,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 1) {
         const b = integer(random, 2, 6);
         const B = 2 * b + 1;
-        return { mode, prompt: `Upper root of 2x² - ${B}x + ${b} ≤ 0`, answer: b, strategy: `Factors to (2x - 1)(x - ${b}) ≤ 0; roots are 0.5 and ${b}. Upper root is ${b}.`, level };
+        return allRoots(mode, `2x² - ${B}x + ${b} = 0`, [0.5, b], `Factor as (2x - 1)(x - ${b}) = 0; the solutions are 0.5 and ${b}.`, level);
       }
       const b = integer(random, 3, 9);
       return { mode, prompt: `Number of positive integer solutions to x² - ${b}x ≤ 0`, answer: b, strategy: `x(x - ${b}) ≤ 0 gives 0 ≤ x ≤ ${b}; positive integers are 1 to ${b} (${b} solutions).`, level };
@@ -432,18 +641,18 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 2) {
         const a = integer(random, 1, 8);
         const b = integer(random, a + 1, a + 10);
-        return { mode, prompt: `Larger root of x² - ${a + b}x + ${a * b} = 0`, answer: b, strategy: `Roots multiply to ${a * b} and sum to ${a + b}: roots are ${a} and ${b}; larger is ${b}.`, level };
+        return allRoots(mode, `x² - ${a + b}x + ${a * b} = 0`, [a, b], `Factor the equation as (x - ${a})(x - ${b}) = 0, so both solutions are ${a} and ${b}.`, level);
       }
       const a = integer(random, 1, 8);
       const b = integer(random, a + 1, a + 10);
-      return { mode, prompt: `Smaller root of x² - ${a + b}x + ${a * b} = 0`, answer: a, strategy: `Roots multiply to ${a * b} and sum to ${a + b}: smaller root is ${a}.`, level };
+        return allRoots(mode, `x² - ${a + b}x + ${a * b} = 0`, [a, b], `Factor the equation as (x - ${a})(x - ${b}) = 0, so both solutions are ${a} and ${b}.`, level);
     }
     if (level === 2) {
       const type = integer(random, 0, 3);
       if (type === 0) {
         const p = integer(random, 1, 8);
         const q = integer(random, p + 1, p + 12);
-        return { mode, prompt: `Positive root of x² - ${q - p}x - ${p * q} = 0`, answer: q, strategy: `Find factors of -${p * q} with difference ${q - p}: ${q} and -${p}; positive root is ${q}.`, level };
+        return allRoots(mode, `x² - ${q - p}x - ${p * q} = 0`, [-p, q], `Factor as (x - ${q})(x + ${p}) = 0; both solutions are -${p} and ${q}.`, level);
       }
       if (type === 1) {
         const p = integer(random, 1, 8);
@@ -452,11 +661,11 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       }
       if (type === 2) {
         const k = integer(random, 2, 16);
-        return { mode, prompt: `Larger root of x² - x - ${k * (k + 1)} = 0`, answer: k + 1, strategy: `Consecutive factors of ${k * (k + 1)} are ${k} and ${k + 1}; larger root is ${k + 1}.`, level };
+        return allRoots(mode, `x² - x - ${k * (k + 1)} = 0`, [-k, k + 1], `Factor as (x - ${k + 1})(x + ${k}) = 0; both solutions are -${k} and ${k + 1}.`, level);
       }
       const p = integer(random, 1, 8);
       const q = integer(random, p + 1, p + 12);
-      return { mode, prompt: `Negative root of x² + ${q - p}x - ${p * q} = 0`, answer: -q, strategy: `Factors to (x + ${q})(x - ${p}) = 0; negative root is -${q}.`, level };
+      return allRoots(mode, `x² + ${q - p}x - ${p * q} = 0`, [-q, p], `Factor as (x + ${q})(x - ${p}) = 0; both solutions are -${q} and ${p}.`, level);
     }
     if (level === 3) {
       const type = integer(random, 0, 4);
@@ -488,7 +697,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       }
       if (type === 1) {
         const b = integer(random, 2, 12);
-        return { mode, prompt: `Larger root of 2x² - ${2 * b + 1}x + ${b} = 0`, answer: b, strategy: `Factors to (2x - 1)(x - ${b}) = 0; roots are 0.5 and ${b}; larger root is ${b}.`, level };
+        return allRoots(mode, `2x² - ${2 * b + 1}x + ${b} = 0`, [0.5, b], `Factor as (2x - 1)(x - ${b}) = 0; both solutions are 0.5 and ${b}.`, level);
       }
       if (type === 2) {
         const a = choose(random, [1, 2]);
@@ -497,7 +706,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       }
       if (type === 3) {
         const b = integer(random, 2, 12);
-        return { mode, prompt: `Larger root of 3x² - ${3 * b + 1}x + ${b} = 0`, answer: b, strategy: `Factors to (3x - 1)(x - ${b}) = 0; roots are 1/3 and ${b}; larger root is ${b}.`, level };
+        return allRoots(mode, `3x² - ${3 * b + 1}x + ${b} = 0`, [1 / 3, b], `Factor as (3x - 1)(x - ${b}) = 0; both solutions are 1/3 and ${b}.`, level);
       }
       const a = choose(random, [2, 3, 4, 6, 7, 8, 9, 11]);
       return { mode, prompt: `25x² - ${a * a} = (5x - a)(5x + a). Find a`, answer: a, strategy: `Difference of two squares: √${a * a} = ${a}.`, level };
@@ -521,10 +730,10 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const b = integer(random, a + 1, a + 5);
       const B = a * a + b * b;
       const C = a * a * b * b;
-      return { mode, prompt: `Positive root of x⁴ - ${B}x² + ${C} = 0 (largest root)`, answer: b, strategy: `Let u = x²: (u - ${a * a})(u - ${b * b}) = 0 ⟹ x² = ${b * b} ⟹ x = ${b}.`, level };
+      return allRoots(mode, `x⁴ - ${B}x² + ${C} = 0`, [-b, -a, a, b], `Let u = x²: (u - ${a * a})(u - ${b * b}) = 0, so x = ±${a} or x = ±${b}.`, level);
     }
     const b = integer(random, 2, 12);
-    return { mode, prompt: `Larger root of 3x² - ${3 * b - 1}x - ${b} = 0`, answer: b, strategy: `(3x + 1)(x - ${b}) = 0; roots are -1/3 and ${b}; larger is ${b}.`, level };
+    return allRoots(mode, `3x² - ${3 * b - 1}x - ${b} = 0`, [-1 / 3, b], `Factor as (3x + 1)(x - ${b}) = 0; both solutions are -1/3 and ${b}.`, level);
   }
 
   // mode === "decimals-large-numbers"
@@ -657,9 +866,36 @@ export function createPracticeSession(seed: number, mode: PracticeModeId, reques
   return questions;
 }
 
-export function verifyPracticeAnswer(input: string, question: Pick<PracticeQuestion, "answer">): boolean {
+export function verifyPracticeAnswer(input: string, question: Pick<PracticeQuestion, "answer" | "answers">): boolean {
+  const answers = question.answers && question.answers.length > 1
+    ? question.answers
+    : [question.answer];
+  if (answers.length > 1 && /^-?\d+(?:\.\d+)?$/.test(input.trim())
+    && matchesRoundedAnswer(Number(input.trim()), question.answer)) return true;
+  return verifyAllAnswers(input, answers);
+}
+
+function matchesRoundedAnswer(actual: number, expected: number): boolean {
+  const displayed = Number(expected.toFixed(4));
+  return Math.abs(actual - expected) <= Math.abs(displayed - expected) + 1e-10;
+}
+
+export function verifyAllAnswers(input: string, answers: number[]): boolean {
+  if (answers.length > 1) {
+    const parts = input.trim().split(/[,;\s]+/);
+    if (parts.length !== answers.length || parts.some((part) => !/^-?\d+(?:\.\d+)?$/.test(part))) return false;
+    const unmatched = [...answers];
+    for (const part of parts) {
+      const match = unmatched.findIndex((expected) => matchesRoundedAnswer(Number(part), expected));
+      if (match === -1) return false;
+      unmatched.splice(match, 1);
+    }
+    return unmatched.length === 0;
+  }
+
   const normalized = input.trim().replaceAll(",", "");
-  return /^-?\d+(?:\.\d+)?$/.test(normalized) && Math.abs(Number(normalized) - question.answer) < 1e-5;
+  return /^-?\d+(?:\.\d+)?$/.test(normalized)
+    && matchesRoundedAnswer(Number(normalized), answers[0]!);
 }
 
 function mean(values: number[]): number {

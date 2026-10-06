@@ -30,7 +30,7 @@ export function App() {
   const [practiceHistory, setPracticeHistory] = useState<PracticeSessionResult[]>([]);
   const [hexHistory, setHexHistory] = useState<HexSessionResult[]>([]);
   const [levels, setLevels] = useState(initialLevels);
-  const [hexLevel, setHexLevel] = useState(2);
+  const [hexLevel, setHexLevel] = useState(1);
   const [activeMode, setActiveMode] = useState<ChallengeMode>("addition");
   const [activeLevel, setActiveLevel] = useState(2);
   const [questions, setQuestions] = useState<PracticeQuestion[]>([]);
@@ -104,7 +104,7 @@ export function App() {
     setPracticeHistory([]);
     setHexHistory([]);
     setLevels(initialLevels());
-    setHexLevel(2);
+    setHexLevel(1);
   }
 
   async function shareUrl(url: string, title: string) {
