@@ -1,14 +1,17 @@
 import {
   Asterisk,
   Binary,
+  Calculator,
   ChevronRight,
   Divide,
   History,
+  Layers,
   Minus,
   Percent,
   PieChart,
   Plus,
   Ruler,
+  Scale,
   Share2,
   ShoppingBasket,
   Shuffle,
@@ -16,6 +19,7 @@ import {
   Superscript,
   Target,
   Trash2,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -44,6 +48,10 @@ const icons: Record<PracticeModeId, LucideIcon> = {
   powers: Superscript,
   estimation: Ruler,
   applied: ShoppingBasket,
+  "decimals-large-numbers": Calculator,
+  "fast-factorising": Layers,
+  "quadratic-inequalities": Scale,
+  physics: Zap,
   mixed: Shuffle,
 };
 
@@ -83,8 +91,13 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
         </section>
 
         <section className="topic-section" aria-labelledby="more-topics">
-          <div className="section-heading"><div><span className="eyebrow">20 questions · 10 minutes</span><h2 id="more-topics">More topics</h2></div><p>Practise common test question types.</p></div>
-          <div className="topic-grid">{PRACTICE_MODES.slice(4).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} level={levels[mode.id]} icon={icons[mode.id]} onStart={onStart} />)}</div>
+          <div className="section-heading"><div><span className="eyebrow">20 questions · 10 minutes</span><h2 id="more-topics">Foundations & applications</h2></div><p>Practise key foundational skills and word problems.</p></div>
+          <div className="topic-grid">{PRACTICE_MODES.slice(4, 10).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} level={levels[mode.id]} icon={icons[mode.id]} onStart={onStart} />)}</div>
+        </section>
+
+        <section className="topic-section" aria-labelledby="advanced-topics">
+          <div className="section-heading"><div><span className="eyebrow">20 questions · 10 minutes</span><h2 id="advanced-topics">Advanced & speed drills</h2></div><p>Physics formulas, fast factorising, quadratic inequalities, and large number tricks.</p></div>
+          <div className="topic-grid">{PRACTICE_MODES.slice(10).map((mode) => <TopicCard key={mode.id} mode={mode.id} label={mode.label} description={mode.description} level={levels[mode.id]} icon={icons[mode.id]} onStart={onStart} />)}</div>
         </section>
 
         <section className="hex-mode-card" aria-labelledby="hex-topic">

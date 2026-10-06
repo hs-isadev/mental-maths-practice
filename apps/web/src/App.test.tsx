@@ -7,7 +7,12 @@ describe("mental maths practice app", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: /mental maths practice/i })).toBeVisible();
     expect(screen.queryByText(/convert faster under pressure/i)).not.toBeInTheDocument();
-    for (const topic of ["Addition", "Subtraction", "Multiplication", "Division", "Fractions", "Percentages", "Ratios", "Powers", "Estimation", "Applied problems", "General maths", "Hexadecimal"]) {
+    for (const topic of [
+      "Addition", "Subtraction", "Multiplication", "Division",
+      "Fractions", "Percentages", "Ratios", "Powers", "Estimation", "Applied problems",
+      "Decimals & large numbers", "Fast factorising", "Quadratic inequalities", "Physics calculations",
+      "General maths", "Hexadecimal",
+    ]) {
       expect(screen.getByRole("button", { name: new RegExp(topic, "i") })).toBeEnabled();
     }
   });
@@ -16,6 +21,13 @@ describe("mental maths practice app", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: /^addition/i }));
     expect(screen.getByText(/Question 1 of 20/)).toBeVisible();
+  });
+
+  it("starts a physics speed calculation session", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: /physics calculations/i }));
+    expect(screen.getByText(/Question 1 of 20/)).toBeVisible();
+    expect(screen.getByText(/Physics calculations · Level 2/i)).toBeVisible();
   });
 
   it("starts a randomized general maths session", () => {

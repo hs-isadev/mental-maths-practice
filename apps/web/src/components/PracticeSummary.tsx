@@ -36,7 +36,16 @@ export function PracticeSummary({ result, onHome, onRetry, onShare }: PracticeSu
         <div className="simple-result-actions"><button className="primary" onClick={onRetry}><RotateCcw />Try another set</button><button onClick={() => void share()}>{shared ? <Check /> : <Share2 />}{shared ? "Link copied" : "Challenge a friend"}</button></div>
         <section className="simple-review">
           <h2>{errors.length ? "Questions to review" : "No mistakes"}</h2>
-          {errors.length ? errors.slice(0, 8).map((attempt, index) => <article key={`${attempt.questionId}-${index}`}><X /><span><small>{attempt.prompt}</small><strong>{attempt.expectedAnswer?.toLocaleString()}</strong></span></article>) : <p><Check /> All answers were correct.</p>}
+          {errors.length ? errors.slice(0, 8).map((attempt, index) => (
+            <article key={`${attempt.questionId}-${index}`}>
+              <X />
+              <span>
+                <small>{attempt.prompt}</small>
+                <strong>{attempt.expectedAnswer?.toLocaleString()}</strong>
+                {attempt.strategy && <small className="review-shortcut">💡 {attempt.strategy}</small>}
+              </span>
+            </article>
+          )) : <p><Check /> All answers were correct.</p>}
         </section>
         <button className="text-button" onClick={() => void share()}><Copy />Copy these questions as a challenge</button>
       </div>

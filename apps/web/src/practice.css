@@ -100,11 +100,17 @@
 .simple-review h2 { font-size: 22px; }
 .simple-review article { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 12px 16px; background: #fff; border-top: 1px solid #e0e5de; }
 .simple-review article > svg { width: 17px; color: #bd5049; }
-.simple-review article span { display: flex; flex: 1; justify-content: space-between; gap: 20px; }
+.simple-review article span { display: flex; flex: 1; flex-wrap: wrap; justify-content: space-between; gap: 4px 20px; }
 .simple-review article small { color: #687268; font-size: 13px; }
 .simple-review article strong { font-family: var(--mono); }
+.simple-review article small.review-shortcut { width: 100%; color: #435b3c; font-size: 12px; margin-top: 4px; }
 .simple-review > p { display: flex; align-items: center; gap: 9px; padding: 20px; background: #fff; border: 1px solid #d6dcd4; border-radius: 10px; }
 .simple-review > p svg { width: 18px; color: #557b15; }
+.practice-tip-container { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 480px; text-align: center; }
+.practice-tip-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; color: #4d594d; background: #e0e6db; border: 1px solid #c7d1c3; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 700; transition: all .15s ease; }
+.practice-tip-toggle:hover { background: #d3dcce; color: #1a221a; }
+.practice-tip-toggle svg { width: 14px; color: #63821e; }
+.practice-tip-content { margin: 4px 0 0; padding: 10px 14px; color: #222b22; background: #fdfefc; border: 1px solid #d3dcd0; border-radius: 8px; font-size: 13px; line-height: 1.45; }
 .text-button { margin-top: 24px; padding: 0; }
 @media (max-width: 900px) {
   .practice-header { padding: 0 20px; }.saved-note { display: none; }.practice-shell { width: min(100% - 32px, 720px); padding-top: 32px; }.practice-intro { grid-template-columns: 1fr; gap: 24px; }.practice-intro dl { grid-template-columns: repeat(2, 1fr); }.practice-intro dl > div:nth-child(3) { border-left: 0; border-top: 1px solid #e1e5df; }.practice-intro dl > div:nth-child(4) { border-top: 1px solid #e1e5df; }.topic-grid, .topic-grid.core-grid { grid-template-columns: repeat(2, 1fr); }.hex-mode-card { grid-template-columns: auto 1fr auto; }.hex-range-select { grid-column: 2; }.hex-mode-card > button { grid-column: 3; grid-row: 1 / span 2; }.practice-history-list article { grid-template-columns: minmax(120px, 1fr) repeat(2, 85px) 35px; }.practice-history-list article > span:nth-of-type(4), .practice-history-list article > svg { display: none; }.practice-drill-body { grid-template-columns: 1fr; }.practice-live-panel { display: none; }.answer-feedback { left: 50%; width: min(560px, calc(100vw - 38px)); }

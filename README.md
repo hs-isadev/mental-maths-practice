@@ -4,9 +4,15 @@ A keyboard-first practice app that measures accuracy and answer speed, saves pro
 
 ## Practice modes
 
-- Addition, subtraction, multiplication, and division
-- Fractions, percentages, ratios, powers, estimation, and applied problems
-- Hexadecimal conversion as an additional dedicated mode
+- **Core arithmetic**: Addition, subtraction, multiplication, and division
+- **Foundations & applications**: Fractions, percentages, ratios, powers, estimation, and applied problems
+- **Advanced speed & Cambridge Ad Maths**:
+  - **Decimals & large numbers**: Quick place-value shifts, base-100 multiplication, and squaring shortcuts
+  - **Fast factorising**: Monic and non-monic quadratics, difference of two squares, and completing the square
+  - **Quadratic inequalities**: Boundary roots, critical values, and integer solution counts
+  - **Physics calculations**: Rapid $v=d/t$, $F=ma$, $W=Fd$, $P=VI$, kinetic energy, and unit conversions
+- **Interactive shortcut tips**: Real-time shortcut button on every question and pedagogical feedback explanations on review
+- **Hexadecimal conversion**: 40-question dual-direction speed mode (decimal $\leftrightarrow$ hexadecimal)
 
 Normal topic sessions contain 20 questions with a 10-minute limit. Hexadecimal sessions contain exactly 40 unique questions with a 20-minute limit: the first 20 are decimal-to-hexadecimal and the final 20 are hexadecimal-to-decimal.
 

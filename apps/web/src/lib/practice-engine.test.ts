@@ -11,7 +11,8 @@ describe("general mental maths engine", () => {
   it("supports every requested non-hexadecimal topic", () => {
     expect(PRACTICE_MODES.map((mode) => mode.id)).toEqual([
       "addition", "subtraction", "multiplication", "division", "fractions",
-      "percentages", "ratios", "powers", "estimation", "applied", "mixed",
+      "percentages", "ratios", "powers", "estimation", "applied",
+      "decimals-large-numbers", "fast-factorising", "quadratic-inequalities", "physics", "mixed",
     ]);
   });
 
@@ -22,6 +23,45 @@ describe("general mental maths engine", () => {
       expect(new Set(questions.map((question) => question.id)).size).toBe(20);
       for (const question of questions) {
         expect(verifyPracticeAnswer(String(question.answer), question)).toBe(true);
+        expect(question.strategy.length).toBeGreaterThan(5);
+      }
+    }
+  });
+
+  it("generates progressive difficulty questions with shortcut tips for physics", () => {
+    for (let lvl = 1; lvl <= 5; lvl++) {
+      const physics = createPracticeSession(8_100 + lvl, "physics", lvl);
+      expect(physics).toHaveLength(20);
+      for (const q of physics) {
+        expect(verifyPracticeAnswer(String(q.answer), q)).toBe(true);
+        expect(q.strategy.length).toBeGreaterThan(5);
+      }
+    }
+  });
+
+  it("generates progressive difficulty for quadratic inequalities and fast factorising", () => {
+    for (let lvl = 1; lvl <= 5; lvl++) {
+      const quad = createPracticeSession(8_200 + lvl, "quadratic-inequalities", lvl);
+      expect(quad).toHaveLength(20);
+      for (const q of quad) {
+        expect(verifyPracticeAnswer(String(q.answer), q)).toBe(true);
+        expect(q.strategy.length).toBeGreaterThan(5);
+      }
+      const factor = createPracticeSession(8_300 + lvl, "fast-factorising", lvl);
+      expect(factor).toHaveLength(20);
+      for (const q of factor) {
+        expect(verifyPracticeAnswer(String(q.answer), q)).toBe(true);
+        expect(q.strategy.length).toBeGreaterThan(5);
+      }
+    }
+  });
+
+  it("generates accurate decimal and large number questions", () => {
+    for (let lvl = 1; lvl <= 5; lvl++) {
+      const decimals = createPracticeSession(8_400 + lvl, "decimals-large-numbers", lvl);
+      expect(decimals).toHaveLength(20);
+      for (const q of decimals) {
+        expect(verifyPracticeAnswer(String(q.answer), q)).toBe(true);
       }
     }
   });

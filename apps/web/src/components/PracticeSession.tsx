@@ -35,6 +35,7 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
   const [remaining, setRemaining] = useState(PRACTICE_SESSION_DURATION_MS);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [validation, setValidation] = useState("");
+  const [showTip, setShowTip] = useState(false);
   const startedAt = useRef(performance.now());
   const questionStartedAt = useRef(startedAt.current);
   const attemptsRef = useRef<PracticeAttempt[]>([]);
@@ -84,6 +85,7 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
       prompt: question.prompt,
       expectedAnswer: question.answer,
       submittedAnswer: answer,
+      strategy: question.strategy,
       correct,
       responseMs: Math.max(1, performance.now() - questionStartedAt.current),
     };
@@ -104,6 +106,7 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
       }
       setIndex((current) => current + 1);
       setFeedback(null);
+      setShowTip(false);
       questionStartedAt.current = performance.now();
       window.requestAnimationFrame(() => inputRef.current?.focus());
     }, correct ? 300 : 1_100);
@@ -135,6 +138,13 @@ export function PracticeSession({ questions, mode, level, seed, onComplete, onEx
             <div className="conversion-input"><span aria-hidden="true">=</span><input ref={inputRef} id="practice-answer" autoFocus autoComplete="off" spellCheck={false} inputMode="decimal" aria-invalid={Boolean(validation)} aria-describedby={validation ? "practice-validation" : "practice-instruction"} /><button type="submit" aria-label="Submit answer"><CornerDownLeft /><span>Submit</span></button></div>
             {validation ? <p id="practice-validation" className="validation" role="alert">{validation}</p> : <p id="practice-instruction"><kbd>ENTER</kbd> submits your answer</p>}
           </form>
+          <div className="practice-tip-container">
+            <button type="button" className="practice-tip-toggle" onClick={() => setShowTip((prev) => !prev)}>
+              <Lightbulb />
+              <span>{showTip ? "Hide shortcut tip" : "Shortcut tip"}</span>
+            </button>
+            {showTip && <p className="practice-tip-content">💡 {question.strategy}</p>}
+          </div>
         </section>
 
         <aside className="practice-live-panel">
