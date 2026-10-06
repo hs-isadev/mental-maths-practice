@@ -164,7 +164,7 @@ function allRoots(
   const answers = [...roots].sort((left, right) => left - right);
   return {
     mode,
-    prompt: `Solve ${equation}. Enter all solutions, separated by commas.`,
+    prompt: `Solve for x: ${equation}`,
     answer: answers[0]!,
     answers,
     strategy,
