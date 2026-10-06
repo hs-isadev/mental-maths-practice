@@ -162,15 +162,25 @@ function makeResult(seed: number, level: number, attempts: HexAttempt[], duratio
 }
 
 function explain(question: HexQuestion): string {
+  if (question.value === 0) return "Zero is written as 0 in either base, so 0₁₀ = 0₁₆.";
   if (question.direction === "hex-to-decimal") {
     const terms = question.prompt.split("").map((digit, index, digits) => {
       const value = Number.parseInt(digit, 16);
       const power = 16 ** (digits.length - index - 1);
-      return `${value}×${power}`;
+      const digitValue = /[A-F]/i.test(digit) ? `${digit.toUpperCase()} (${value})` : digit;
+      return `${digitValue} × ${power}`;
     });
-    return `${terms.join(" + ")} = ${question.answer}`;
+    return `Read place values from right to left as 1, 16, 16², and so on. A–F mean 10–15. Expand ${question.prompt}: ${terms.join(" + ")} = ${question.answer} in decimal.`;
   }
-  const quotient = Math.floor(question.value / 16);
-  const remainder = question.value % 16;
-  return `${question.value} ÷ 16 = ${quotient} remainder ${remainder.toString(16).toUpperCase()} → ${question.answer}`;
+  let quotient = question.value;
+  const steps: string[] = [];
+  while (quotient > 0) {
+    const nextQuotient = Math.floor(quotient / 16);
+    const remainder = quotient % 16;
+    const hexDigit = remainder.toString(16).toUpperCase();
+    steps.push(`${quotient} ÷ 16 = ${nextQuotient} remainder ${hexDigit}`);
+    quotient = nextQuotient;
+  }
+  const digitOrder = steps.map((step) => step.slice(step.lastIndexOf("remainder ") + "remainder ".length)).reverse().join("");
+  return `Keep dividing by 16 and record each remainder: ${steps.join("; ")}. Read the remainders from last to first: ${digitOrder || "0"}. For remainders 10–15, write A–F.`;
 }

@@ -308,26 +308,35 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
   if (mode === "addition") {
     const a = integer(random, 1, maximum);
     const b = integer(random, 1, maximum);
-    return { mode, prompt: `${a} + ${b}`, answer: a + b, strategy: "Add from the largest place value first.", level };
+    const tensA = Math.floor(a / 10) * 10;
+    const tensB = Math.floor(b / 10) * 10;
+    return { mode, prompt: `${a} + ${b}`, answer: a + b, strategy: `Split into tens and ones: ${tensA} + ${tensB} = ${tensA + tensB}, and ${a % 10} + ${b % 10} = ${(a % 10) + (b % 10)}. Combine them: ${tensA + tensB} + ${(a % 10) + (b % 10)} = ${a + b}.`, level };
   }
   if (mode === "subtraction") {
     const a = integer(random, 1, maximum);
     const b = integer(random, 1, maximum);
     const high = Math.max(a, b);
     const low = Math.min(a, b);
-    return { mode, prompt: `${high} − ${low}`, answer: high - low, strategy: "Count up from the smaller number or subtract in parts.", level };
+    const lowTens = Math.floor(low / 10) * 10;
+    return { mode, prompt: `${high} − ${low}`, answer: high - low, strategy: `Subtract in parts: ${high} − ${lowTens} = ${high - lowTens}, then subtract the remaining ${low % 10}: ${high - lowTens} − ${low % 10} = ${high - low}.`, level };
   }
   if (mode === "multiplication") {
     const factorMaximum = [6, 10, 12, 20, 30][level - 1] ?? 6;
     const a = integer(random, 2, factorMaximum);
     const b = integer(random, 2, factorMaximum);
-    return { mode, prompt: `${a} × ${b}`, answer: a * b, strategy: "Split one factor into an easy multiple when needed.", level };
+    const split = b >= 10 ? b : a;
+    const other = split === b ? a : b;
+    const tens = Math.floor(split / 10) * 10;
+    const strategy = split >= 10
+      ? `Split ${split} into ${tens} + ${split - tens}: (${other} × ${tens}) + (${other} × ${split - tens}) = ${other * tens} + ${other * (split - tens)} = ${a * b}.`
+      : `${a} × ${b} means ${a} groups of ${b}. Add the groups: ${Array.from({ length: a }, () => b).join(" + ")} = ${a * b}.`;
+    return { mode, prompt: `${a} × ${b}`, answer: a * b, strategy, level };
   }
   if (mode === "division") {
     const factorMaximum = [6, 10, 12, 20, 30][level - 1] ?? 6;
     const divisor = integer(random, 2, factorMaximum);
     const quotient = integer(random, 2, factorMaximum);
-    return { mode, prompt: `${divisor * quotient} ÷ ${divisor}`, answer: quotient, strategy: "Reverse the related multiplication fact.", level };
+    return { mode, prompt: `${divisor * quotient} ÷ ${divisor}`, answer: quotient, strategy: `Division reverses multiplication. Ask “${divisor} times what equals ${divisor * quotient}?” Since ${divisor} × ${quotient} = ${divisor * quotient}, the quotient is ${quotient}.`, level };
   }
   if (mode === "fractions") {
     if (level >= 2) {
@@ -336,21 +345,24 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (numerator % denominator === 0) numerator += 1;
       let amount = integer(random, 3, 12 + level * 4);
       while ((numerator * amount) % denominator === 0) amount += 1;
-      const answer = Math.round((numerator * amount / denominator + Number.EPSILON) * 100) / 100;
-      return { mode, prompt: `${numerator}/${denominator} of ${amount} (2 d.p.)`, answer, strategy: "Multiply by the numerator, divide by the denominator, then round to two decimal places.", level };
+      const exact = numerator * amount / denominator;
+      const answer = Math.round((exact + Number.EPSILON) * 100) / 100;
+      const exactText = Number(exact.toFixed(8)).toString();
+      return { mode, prompt: `${numerator}/${denominator} of ${amount} (2 d.p.)`, answer, strategy: `“Of” means multiply: ${numerator}/${denominator} × ${amount} = (${numerator} × ${amount}) ÷ ${denominator} = ${exactText}. Round to 2 decimal places: ${answer}.`, level };
     }
     const denominators = level <= 2 ? [2, 3, 4, 5] : level <= 4 ? [2, 3, 4, 5, 6, 8, 10] : [3, 4, 5, 6, 8, 10, 12];
     const denominator = choose(random, denominators);
     const numerator = integer(random, 1, denominator - 1);
     const multiplier = integer(random, 2, 6 + level * 3);
-    return { mode, prompt: `${numerator}/${denominator} of ${denominator * multiplier}`, answer: numerator * multiplier, strategy: "Divide by the denominator, then multiply by the numerator.", level };
+    return { mode, prompt: `${numerator}/${denominator} of ${denominator * multiplier}`, answer: numerator * multiplier, strategy: `“Of” means multiply. First ${denominator * multiplier} ÷ ${denominator} = ${multiplier} (one denominator-sized part); then ${multiplier} × ${numerator} = ${numerator * multiplier}.`, level };
   }
   if (mode === "percentages") {
     const pools = [[10, 25, 50], [5, 10, 20, 25, 50], [5, 10, 15, 20, 25, 50, 75], [5, 12, 15, 20, 25, 30, 40, 60, 75], [3, 5, 12, 15, 18, 25, 35, 62, 75]];
     const percent = choose(random, pools[level - 1] ?? pools[0]!);
     const step = 100 / greatestCommonDivisor(percent, 100);
     const base = step * integer(random, 2, 10 + level * 5);
-    return { mode, prompt: `${percent}% of ${base}`, answer: percent * base / 100, strategy: "Use 10%, 5%, 25%, or 50% as a building block.", level };
+    const answer = percent * base / 100;
+    return { mode, prompt: `${percent}% of ${base}`, answer, strategy: `${percent}% means ${percent}/100. Calculate ${base} × ${percent}/100 = (${base} ÷ 100) × ${percent} = ${answer}. For a mental shortcut, split the percentage into familiar parts such as 10%, 5%, 25%, or 50%.`, level };
   }
   if (mode === "ratios") {
     const partMaximum = 3 + level * 2;
@@ -358,27 +370,30 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
     const second = integer(random, 1, partMaximum);
     const unit = integer(random, 2, 5 + level * 3);
     const total = (first + second) * unit;
-    return { mode, prompt: `Split ${total} in the ratio ${first}:${second}. First share?`, answer: first * unit, strategy: "Add the ratio parts, find one part, then multiply.", level };
+    return { mode, prompt: `Split ${total} in the ratio ${first}:${second}. First share?`, answer: first * unit, strategy: `There are ${first} + ${second} = ${first + second} equal parts. One part is ${total} ÷ ${first + second} = ${unit}; the first share is ${first} × ${unit} = ${first * unit}.`, level };
   }
   if (mode === "powers") {
     const exponent = choose(random, level <= 2 ? [2, 3] : [2, 2, 3]);
     const base = integer(random, 2, 12 + level * 4);
-    return { mode, prompt: `${base}${exponent === 2 ? "²" : "³"}`, answer: base ** exponent, strategy: exponent === 2 ? "Multiply the base by itself." : "Square the base, then multiply once more.", level };
+    return { mode, prompt: `${base}${exponent === 2 ? "²" : "³"}`, answer: base ** exponent, strategy: exponent === 2 ? `${base}² means ${base} × ${base} = ${base ** exponent}.` : `${base}³ means three factors of ${base}: ${base} × ${base} = ${base ** 2}, then ${base ** 2} × ${base} = ${base ** exponent}.`, level };
   }
   if (mode === "estimation") {
     const place = level <= 2 ? 10 : level <= 4 ? 100 : 1_000;
     const value = integer(random, place, place * (15 + level * 12)) + integer(random, 1, place - 1);
-    return { mode, prompt: `Round ${value.toLocaleString()} to the nearest ${place.toLocaleString()}`, answer: Math.round(value / place) * place, strategy: "Check the digit immediately to the right of the rounding place.", level };
+    const lower = Math.floor(value / place) * place;
+    const upper = lower + place;
+    const answer = value - lower < place / 2 ? lower : upper;
+    return { mode, prompt: `Round ${value.toLocaleString()} to the nearest ${place.toLocaleString()}`, answer, strategy: `The two nearest ${place.toLocaleString()}s are ${lower.toLocaleString()} and ${upper.toLocaleString()}; the halfway point is ${Math.floor(lower + place / 2).toLocaleString()}. ${value.toLocaleString()} is ${value - lower < place / 2 ? "below" : "at or above"} halfway, so round ${value - lower < place / 2 ? "down" : "up"} to ${answer.toLocaleString()}.`, level };
   }
 
   if (mode === "applied") {
     const template = integer(random, 0, 2);
     const a = integer(random, 2, 8 + level * 4);
     const b = integer(random, 2, 10 + level * 6);
-    if (template === 0) return { mode, prompt: `${a} items cost £${b} each. Total cost?`, answer: a * b, strategy: "Multiply the number of items by the price.", level };
-    if (template === 1) return { mode, prompt: `${a * b} items shared between ${a} people. Each?`, answer: b, strategy: "Divide the total by the number of people.", level };
+    if (template === 0) return { mode, prompt: `${a} items cost £${b} each. Total cost?`, answer: a * b, strategy: `${a} equal items at £${b} each cost ${a} × ${b} = £${a * b} altogether.`, level };
+    if (template === 1) return { mode, prompt: `${a * b} items shared between ${a} people. Each?`, answer: b, strategy: `Share equally by dividing: ${a * b} ÷ ${a} = ${b} items per person. Check: ${a} × ${b} = ${a * b}.`, level };
     const paid = Math.ceil((a * b + 5) / 10) * 10;
-    return { mode, prompt: `Pay £${paid} for items costing £${a * b}. Change?`, answer: paid - a * b, strategy: "Subtract the cost from the amount paid.", level };
+    return { mode, prompt: `Pay £${paid} for items costing £${a * b}. Change?`, answer: paid - a * b, strategy: `Change = amount paid − cost: £${paid} − £${a * b} = £${paid - a * b}.`, level };
   }
 
   if (mode === "physics" && level === 0) {
@@ -570,10 +585,10 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const a = integer(random, 1, 5);
       const b = integer(random, a + 2, a + 8);
       const type = integer(random, 0, 3);
-      if (type === 0) return allRoots(mode, `(x - ${a})(x - ${b}) = 0`, [a, b], `The boundary values are x = ${a} and x = ${b}.`, level);
-      if (type === 1) return allRoots(mode, `(x - ${a})(x - ${b}) = 0`, [a, b], `The boundary values are x = ${a} and x = ${b}.`, level);
-      if (type === 2) return { mode, prompt: `Smallest integer satisfying (x - ${a})(x - ${b}) < 0`, answer: a + 1, strategy: `Inequality holds strictly between ${a} and ${b}: smallest integer is ${a} + 1 = ${a + 1}.`, level };
-      return { mode, prompt: `Largest integer satisfying (x - ${a})(x - ${b}) < 0`, answer: b - 1, strategy: `Inequality holds strictly between ${a} and ${b}: largest integer is ${b} - 1 = ${b - 1}.`, level };
+      if (type === 0) return allRoots(mode, `(x - ${a})(x - ${b}) = 0`, [a, b], `Set each factor to zero: x - ${a} = 0 gives x = ${a}, and x - ${b} = 0 gives x = ${b}.`, level);
+      if (type === 1) return allRoots(mode, `(x - ${a})(x - ${b}) = 0`, [a, b], `Set each factor to zero: x - ${a} = 0 gives x = ${a}, and x - ${b} = 0 gives x = ${b}.`, level);
+      if (type === 2) return { mode, prompt: `Smallest integer satisfying (x - ${a})(x - ${b}) < 0`, answer: a + 1, strategy: `The product is negative between its roots, ${a} and ${b}. The inequality is strict, so the endpoints are excluded; the first integer after ${a} is ${a} + 1 = ${a + 1}.`, level };
+      return { mode, prompt: `Largest integer satisfying (x - ${a})(x - ${b}) < 0`, answer: b - 1, strategy: `The product is negative between its roots, ${a} and ${b}. The strict inequality excludes ${b}; the last integer before it is ${b} - 1 = ${b - 1}.`, level };
     }
     if (level === 2) {
       const a = integer(random, 2, 6);
@@ -583,9 +598,9 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const type = integer(random, 0, 3);
       if (type === 0) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], quadraticRootTip([a, b], -S, P), level);
       if (type === 1) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], quadraticRootTip([a, b], -S, P), level);
-      if (type === 2) return { mode, prompt: `Number of integer solutions to x² - ${S}x + ${P} ≤ 0`, answer: b - a + 1, strategy: `Roots ${a} and ${b} inclusive: count = ${b} - ${a} + 1 = ${b - a + 1}.`, level };
+      if (type === 2) return { mode, prompt: `Number of integer solutions to x² - ${S}x + ${P} ≤ 0`, answer: b - a + 1, strategy: `Factor as (x - ${a})(x - ${b}). Since the parabola opens upward, it is at or below zero between the roots; “≤” includes both endpoints. Count the integers ${a} through ${b}: ${b} - ${a} + 1 = ${b - a + 1}.`, level };
       const r = integer(random, 3, 10);
-      return { mode, prompt: `Smallest integer satisfying x² ≤ ${r * r}`, answer: -r, strategy: `x² ≤ ${r * r} means -${r} ≤ x ≤ ${r}; minimum integer is -${r}.`, level };
+      return { mode, prompt: `Smallest integer satisfying x² ≤ ${r * r}`, answer: -r, strategy: `Taking square roots gives |x| ≤ ${r}, which means -${r} ≤ x ≤ ${r}. The smallest integer in that interval is -${r}.`, level };
     }
     if (level === 3) {
       const a = integer(random, 2, 6);
@@ -594,9 +609,9 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const P = a * b;
       const quadStr = diff > 0 ? `x² - ${diff}x - ${P}` : diff < 0 ? `x² + ${Math.abs(diff)}x - ${P}` : `x² - ${P}`;
       const type = integer(random, 0, 3);
-      if (type === 0) return { mode, prompt: `Smallest integer satisfying ${quadStr} ≤ 0`, answer: -a, strategy: `Factors to (x + ${a})(x - ${b}) ≤ 0: interval [ -${a}, ${b} ]; smallest integer is -${a}.`, level };
-      if (type === 1) return { mode, prompt: `Largest integer satisfying ${quadStr} < 0`, answer: b - 1, strategy: `Factors to (x + ${a})(x - ${b}) < 0: open interval (-${a}, ${b}); largest integer is ${b} - 1 = ${b - 1}.`, level };
-      if (type === 2) return { mode, prompt: `Number of integer solutions to ${quadStr} ≤ 0`, answer: b + a + 1, strategy: `Inclusive integer solutions from -${a} to ${b}: count = ${b} - (-${a}) + 1 = ${b + a + 1}.`, level };
+      if (type === 0) return { mode, prompt: `Smallest integer satisfying ${quadStr} ≤ 0`, answer: -a, strategy: `Factor as (x + ${a})(x - ${b}). An upward-opening quadratic is at or below zero between its roots, so -${a} ≤ x ≤ ${b}; the smallest integer is -${a}.`, level };
+      if (type === 1) return { mode, prompt: `Largest integer satisfying ${quadStr} < 0`, answer: b - 1, strategy: `Factor as (x + ${a})(x - ${b}). The expression is negative strictly between the roots, so -${a} < x < ${b}; the largest integer below ${b} is ${b} - 1 = ${b - 1}.`, level };
+      if (type === 2) return { mode, prompt: `Number of integer solutions to ${quadStr} ≤ 0`, answer: b + a + 1, strategy: `The roots are -${a} and ${b}, and “≤ 0” includes them. Count every integer from -${a} to ${b}: ${b} - (-${a}) + 1 = ${b + a + 1}.`, level };
       return allRoots(mode, `${quadStr} = 0`, [-a, b], quadraticRootTip([-a, b], b - a, -(a * b)), level);
     }
     if (level === 4) {
@@ -604,28 +619,28 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 0) {
         const a = integer(random, 2, 4);
         const b = integer(random, a + 2, a + 6);
-        return { mode, prompt: `Smallest integer satisfying (x - ${a})(x - ${b}) > 0 with x > ${a}`, answer: b + 1, strategy: `Solutions are x < ${a} or x > ${b}. For x > ${b}, smallest integer is ${b} + 1 = ${b + 1}.`, level };
+        return { mode, prompt: `Smallest integer satisfying (x - ${a})(x - ${b}) > 0 with x > ${a}`, answer: b + 1, strategy: `The product is positive outside its roots: x < ${a} or x > ${b}. The question also requires x > ${a}, leaving x > ${b}; the first integer is ${b} + 1 = ${b + 1}.`, level };
       }
       if (type === 1) {
         const b = integer(random, 2, 6);
         const B = 2 * b + 1;
-        return allRoots(mode, `2x² - ${B}x + ${b} = 0`, [0.5, b], `Factor as (2x - 1)(x - ${b}) = 0; the solutions are 0.5 and ${b}.`, level);
+        return allRoots(mode, `2x² - ${B}x + ${b} = 0`, [0.5, b], `Factor as (2x - 1)(x - ${b}) = 0. Set each factor to zero: 2x - 1 = 0 gives x = 1/2 = 0.5, and x - ${b} = 0 gives x = ${b}.`, level);
       }
       const b = integer(random, 3, 9);
-      return { mode, prompt: `Number of positive integer solutions to x² - ${b}x ≤ 0`, answer: b, strategy: `x(x - ${b}) ≤ 0 gives 0 ≤ x ≤ ${b}; positive integers are 1 to ${b} (${b} solutions).`, level };
+      return { mode, prompt: `Number of positive integer solutions to x² - ${b}x ≤ 0`, answer: b, strategy: `Factor: x² - ${b}x = x(x - ${b}). It is ≤ 0 between roots 0 and ${b}, inclusive. The positive integers are 1 through ${b}, giving ${b} solutions.`, level };
     }
     const type = integer(random, 0, 2);
     if (type === 0) {
       const roots = [3, 4, 5, 6, 7, 8, 9, 10];
       const r = choose(random, roots);
       const c = r * r;
-      return { mode, prompt: `Positive critical value of k for x² + kx + ${c} = 0 to have real roots`, answer: 2 * r, strategy: `b² - 4ac ≥ 0 requires k² ≥ 4 × ${c} = ${(2 * r) ** 2}, so k = ${2 * r}.`, level };
+      return { mode, prompt: `Positive critical value of k for x² + kx + ${c} = 0 to have real roots`, answer: 2 * r, strategy: `Real roots require the discriminant b² - 4ac to be at least zero. Here that is k² - 4(${c}) ≥ 0, so k² ≥ ${(2 * r) ** 2}. At the critical boundary the discriminant is zero: k = √${(2 * r) ** 2} = ${2 * r} (take the positive value requested).`, level };
     }
     if (type === 1) {
       const roots = [3, 4, 5, 6, 7, 8];
       const r = choose(random, roots);
       const c = r * r;
-      return { mode, prompt: `Upper bound for k (k > 0) if x² + kx + ${c} > 0 for all real x`, answer: 2 * r, strategy: `b² - 4ac < 0 requires k² < 4 × ${c} = ${(2 * r) ** 2}, so k < ${2 * r}.`, level };
+      return { mode, prompt: `Upper bound for k (k > 0) if x² + kx + ${c} > 0 for all real x`, answer: 2 * r, strategy: `The parabola opens upward and stays strictly above zero only when it has no real roots, so its discriminant must be negative. k² - 4(${c}) < 0 gives k² < ${(2 * r) ** 2}; because k > 0, this means k < ${2 * r}.`, level };
     }
     const a = integer(random, 1, 3);
     const b = integer(random, 2, 5);
@@ -634,7 +649,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
     const quadStr = diff > 0 ? `x² - ${diff}x - ${P}` : diff < 0 ? `x² + ${Math.abs(diff)}x - ${P}` : `x² - ${P}`;
     let sum = 0;
     for (let i = -a + 1; i <= b - 1; i++) sum += i;
-    return { mode, prompt: `Sum of integer solutions to ${quadStr} < 0`, answer: sum, strategy: `Roots are -${a} and ${b}. Integers strictly inside: from ${-a + 1} to ${b - 1}; sum = ${sum}.`, level };
+      return { mode, prompt: `Sum of integer solutions to ${quadStr} < 0`, answer: sum, strategy: `The roots are -${a} and ${b}. Since the parabola opens upward, it is negative strictly between them, so the integer solutions run from ${-a} + 1 = ${-a + 1} through ${b} - 1 = ${b - 1}. Add that consecutive range: ${sum}.`, level };
   }
 
   if (mode === "fast-factorising") {
@@ -647,7 +662,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 1) {
         const a = integer(random, 2, 8);
         const b = integer(random, a + 1, a + 12);
-        return { mode, prompt: `x² - ${a + b}x + ${a * b} = (x - a)(x - b) with a < b. Find b`, answer: b, strategy: `Factors of ${a * b} adding to ${a + b} are ${a} and ${b}; larger is ${b}.`, level };
+        return { mode, prompt: `x² - ${a + b}x + ${a * b} = (x - a)(x - b) with a < b. Find b`, answer: b, strategy: `For x² - ${a + b}x + ${a * b}, find two positive factors of ${a * b} that add to ${a + b}. They are ${a} and ${b}, because ${a} × ${b} = ${a * b} and ${a} + ${b} = ${a + b}; the larger is b = ${b}.`, level };
       }
       if (type === 2) {
         const a = integer(random, 1, 8);
@@ -668,7 +683,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 1) {
         const p = integer(random, 1, 8);
         const q = integer(random, p + 1, p + 12);
-        return { mode, prompt: `x² + ${q - p}x - ${p * q} = (x + a)(x - b) with a, b > 0. Find a`, answer: q, strategy: `Factors of -${p * q} adding to +${q - p}: (x + ${q})(x - ${p}), so a = ${q}.`, level };
+        return { mode, prompt: `x² + ${q - p}x - ${p * q} = (x + a)(x - b) with a, b > 0. Find a`, answer: q, strategy: `The constant is negative, so the bracket numbers have opposite signs. The pair ${q} and -${p} multiplies to -${p * q} and adds to ${q - p}, matching the middle term. Thus the factorisation is (x + ${q})(x - ${p}), so a = ${q}.`, level };
       }
       if (type === 2) {
         const k = integer(random, 2, 16);
@@ -682,69 +697,69 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const type = integer(random, 0, 4);
       if (type === 0) {
         const k = integer(random, 2, 20);
-        return { mode, prompt: `Constant added to x² - ${2 * k}x to complete the square`, answer: k * k, strategy: `(b/2)² = (-${2 * k}/2)² = (-${k})² = ${k * k}.`, level };
+        return { mode, prompt: `Constant added to x² - ${2 * k}x to complete the square`, answer: k * k, strategy: `A square has the form (x + m)² = x² + 2mx + m². Match 2m to -${2 * k}, giving m = -${k}; the required constant is m² = (-${k})² = ${k * k}.`, level };
       }
       if (type === 1) {
         const k = integer(random, 2, 20);
-        return { mode, prompt: `Constant added to x² + ${2 * k}x to complete the square`, answer: k * k, strategy: `(b/2)² = (${2 * k}/2)² = ${k}² = ${k * k}.`, level };
+        return { mode, prompt: `Constant added to x² + ${2 * k}x to complete the square`, answer: k * k, strategy: `A square has the form (x + m)² = x² + 2mx + m². Match 2m to ${2 * k}, so m = ${k}; add m² = ${k}² = ${k * k}.`, level };
       }
       if (type === 2) {
         const a = choose(random, [3, 5, 7, 9, 11, 13, 15, 17, 19]);
-        return { mode, prompt: `4x² - ${a * a} = (2x - a)(2x + a). Find a`, answer: a, strategy: `√${a * a} = ${a}.`, level };
+        return { mode, prompt: `4x² - ${a * a} = (2x - a)(2x + a). Find a`, answer: a, strategy: `This is a difference of squares: (2x)² - a² = (2x - a)(2x + a). Since a² = ${a * a}, take the positive square root: a = √${a * a} = ${a}.`, level };
       }
       if (type === 3) {
         const a = choose(random, [2, 4, 5, 7, 8, 10, 11, 13, 14]);
-        return { mode, prompt: `9x² - ${a * a} = (3x - a)(3x + a). Find a`, answer: a, strategy: `√${a * a} = ${a}.`, level };
+        return { mode, prompt: `9x² - ${a * a} = (3x - a)(3x + a). Find a`, answer: a, strategy: `This is a difference of squares: (3x)² - a² = (3x - a)(3x + a). Since a² = ${a * a}, take the positive square root: a = √${a * a} = ${a}.`, level };
       }
       const c = integer(random, 2, 16);
-      return { mode, prompt: `x² + bx + ${c * c} is a perfect square (b > 0). Find b`, answer: 2 * c, strategy: `b = 2√c = 2 × ${c} = ${2 * c}.`, level };
+      return { mode, prompt: `x² + bx + ${c * c} is a perfect square (b > 0). Find b`, answer: 2 * c, strategy: `Match it to (x + m)² = x² + 2mx + m². Since m² = ${c * c}, m = ${c}; therefore b = 2m = 2 × ${c} = ${2 * c}.` , level };
     }
     if (level === 4) {
       const type = integer(random, 0, 4);
       if (type === 0) {
         const a = choose(random, [1, 3, 5]);
         const b = integer(random, 1, 9);
-        return { mode, prompt: `2x² + ${2 * b + a}x + ${a * b} = (2x + ${a})(x + b). Find b`, answer: b, strategy: `Constant term ${a * b} ÷ ${a} = ${b}.`, level };
+        return { mode, prompt: `2x² + ${2 * b + a}x + ${a * b} = (2x + ${a})(x + b). Find b`, answer: b, strategy: `Expand the constant parts: ${a} × b must equal ${a * b}. Divide by ${a}: b = ${a * b} ÷ ${a} = ${b}. Check the x-term: 2b + ${a} = ${2 * b + a}.`, level };
       }
       if (type === 1) {
         const b = integer(random, 2, 12);
-        return allRoots(mode, `2x² - ${2 * b + 1}x + ${b} = 0`, [0.5, b], `Factor as (2x - 1)(x - ${b}) = 0; both solutions are 0.5 and ${b}.`, level);
+        return allRoots(mode, `2x² - ${2 * b + 1}x + ${b} = 0`, [0.5, b], `Factor as (2x - 1)(x - ${b}) = 0. Set each factor to zero: 2x - 1 = 0 gives x = 1/2 = 0.5, and x - ${b} = 0 gives x = ${b}.`, level);
       }
       if (type === 2) {
         const a = choose(random, [1, 2]);
         const b = integer(random, 1, 8);
-        return { mode, prompt: `3x² + ${3 * b + a}x + ${a * b} = (3x + ${a})(x + b). Find b`, answer: b, strategy: `Constant term ${a * b} ÷ ${a} = ${b}.`, level };
+        return { mode, prompt: `3x² + ${3 * b + a}x + ${a * b} = (3x + ${a})(x + b). Find b`, answer: b, strategy: `Expand the constant parts: ${a} × b must equal ${a * b}. Divide by ${a}: b = ${a * b} ÷ ${a} = ${b}. Check the x-term: 3b + ${a} = ${3 * b + a}.`, level };
       }
       if (type === 3) {
         const b = integer(random, 2, 12);
-        return allRoots(mode, `3x² - ${3 * b + 1}x + ${b} = 0`, [1 / 3, b], `Factor as (3x - 1)(x - ${b}) = 0; both solutions are 1/3 and ${b}.`, level);
+        return allRoots(mode, `3x² - ${3 * b + 1}x + ${b} = 0`, [1 / 3, b], `Factor as (3x - 1)(x - ${b}) = 0. Set each factor to zero: 3x - 1 = 0 gives x = 1/3, and x - ${b} = 0 gives x = ${b}.`, level);
       }
       const a = choose(random, [2, 3, 4, 6, 7, 8, 9, 11]);
-      return { mode, prompt: `25x² - ${a * a} = (5x - a)(5x + a). Find a`, answer: a, strategy: `Difference of two squares: √${a * a} = ${a}.`, level };
+      return { mode, prompt: `25x² - ${a * a} = (5x - a)(5x + a). Find a`, answer: a, strategy: `Recognise (5x)² - a² as a difference of squares: (5x - a)(5x + a). Match a² = ${a * a}, so a = √${a * a} = ${a} (the positive value).`, level };
     }
     const type = integer(random, 0, 3);
     if (type === 0) {
       const h = integer(random, 2, 9);
       const k = integer(random, 1, 14);
       const c = h * h + k;
-      return { mode, prompt: `Minimum value of y = x² - ${2 * h}x + ${c}`, answer: k, strategy: `Vertex at x = ${h}: (${h})² - ${2 * h}(${h}) + ${c} = ${k}.`, level };
+      return { mode, prompt: `Minimum value of y = x² - ${2 * h}x + ${c}`, answer: k, strategy: `Complete the square: x² - ${2 * h}x + ${c} = (x - ${h})² + ${c - h * h} = (x - ${h})² + ${k}. A square cannot be below zero, so the minimum occurs at x = ${h} and equals ${k}.`, level };
     }
     if (type === 1) {
       const h = integer(random, 2, 8);
       const k = integer(random, 10, 25);
       const c = k - h * h;
       const cStr = c >= 0 ? `+ ${c}` : `- ${Math.abs(c)}`;
-      return { mode, prompt: `Maximum value of y = -x² + ${2 * h}x ${cStr}`, answer: k, strategy: `Inverted parabola max at x = ${h}: -(${h})² + ${2 * h}(${h}) ${cStr} = ${k}.`, level };
+      return { mode, prompt: `Maximum value of y = -x² + ${2 * h}x ${cStr}`, answer: k, strategy: `Complete the square: -x² + ${2 * h}x ${cStr} = -(x - ${h})² + ${k}. Since -(x - ${h})² is at most zero, the maximum value is ${k}, reached at x = ${h}.`, level };
     }
     if (type === 2) {
       const a = integer(random, 1, 4);
       const b = integer(random, a + 1, a + 5);
       const B = a * a + b * b;
       const C = a * a * b * b;
-      return allRoots(mode, `x⁴ - ${B}x² + ${C} = 0`, [-b, -a, a, b], `Let u = x²: (u - ${a * a})(u - ${b * b}) = 0, so x = ±${a} or x = ±${b}.`, level);
+      return allRoots(mode, `x⁴ - ${B}x² + ${C} = 0`, [-b, -a, a, b], `Substitute u = x² to get u² - ${B}u + ${C} = 0, which factors as (u - ${a * a})(u - ${b * b}) = 0. Thus x² = ${a * a} or ${b * b}; take both square roots of each: x = ±${a} or x = ±${b}.`, level);
     }
     const b = integer(random, 2, 12);
-    return allRoots(mode, `3x² - ${3 * b - 1}x - ${b} = 0`, [-1 / 3, b], `Factor as (3x + 1)(x - ${b}) = 0; both solutions are -1/3 and ${b}.`, level);
+    return allRoots(mode, `3x² - ${3 * b - 1}x - ${b} = 0`, [-1 / 3, b], `Factor as (3x + 1)(x - ${b}) = 0. Set each factor to zero: 3x + 1 = 0 gives x = -1/3, and x - ${b} = 0 gives x = ${b}.`, level);
   }
 
   // mode === "decimals-large-numbers"
@@ -754,63 +769,63 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const a = choose(random, [2, 3, 4, 5, 6, 7, 8]);
       const b = choose(random, [2, 3, 4, 5, 6, 7, 8, 9]);
       const ans = Number(((a * b) / 100).toFixed(2));
-      return { mode, prompt: `0.${a} × 0.${b}`, answer: ans, strategy: `${a} × ${b} = ${a * b}, then shift decimal point 2 places left = ${ans}.`, level };
+      return { mode, prompt: `0.${a} × 0.${b}`, answer: ans, strategy: `There is one decimal place in each factor, so the product has two decimal places. Multiply the digits first: ${a} × ${b} = ${a * b}; divide by 100: ${a * b} ÷ 100 = ${ans}.`, level };
     }
     if (type === 1) {
       const n = choose(random, [6, 8, 12, 14, 16, 24, 28, 36, 42]);
       const ans = Math.round(1.5 * n);
-      return { mode, prompt: `1.5 × ${n}`, answer: ans, strategy: `1.5 × ${n} = ${n} + half of ${n} (${n / 2}) = ${ans}.`, level };
+      return { mode, prompt: `1.5 × ${n}`, answer: ans, strategy: `Write 1.5 as 1 + 0.5. So 1.5 × ${n} = one ${n} (${n}) plus half of ${n} (${n / 2}): ${n} + ${n / 2} = ${ans}.`, level };
     }
     if (type === 2) {
       const n = choose(random, [8, 12, 14, 16, 18, 24, 28, 32]);
       const ans = Math.round(2.5 * n);
-      return { mode, prompt: `2.5 × ${n}`, answer: ans, strategy: `Double 2.5 to 5, halve ${n} to ${n / 2}: 5 × ${n / 2} = ${ans}.`, level };
+      return { mode, prompt: `2.5 × ${n}`, answer: ans, strategy: `Use 2.5 = 2 + 0.5: ${n} × 2 = ${2 * n} and half of ${n} is ${n / 2}. Add them: ${2 * n} + ${n / 2} = ${ans}.`, level };
     }
     const n = choose(random, [7, 9, 13, 14, 18, 23, 27, 34, 45]);
-    return { mode, prompt: `${n} ÷ 0.5`, answer: n * 2, strategy: `Dividing by 0.5 is doubling: ${n} × 2 = ${n * 2}.`, level };
+    return { mode, prompt: `${n} ÷ 0.5`, answer: n * 2, strategy: `Dividing by 0.5 asks how many halves fit in ${n}. Each whole contains 2 halves, so ${n} ÷ 0.5 = ${n} × 2 = ${n * 2}.`, level };
   }
   if (level === 2) {
     const type = integer(random, 0, 3);
     if (type === 0) {
       const tens = integer(random, 2, 9);
       const val = tens * 10 + 5;
-      return { mode, prompt: `${val}²`, answer: val * val, strategy: `Ending in 5: ${tens} × ${tens + 1} = ${tens * (tens + 1)}, append 25 ⟹ ${val * val}.`, level };
+      return { mode, prompt: `${val}²`, answer: val * val, strategy: `For a number ending in 5, multiply the digits before 5 by the next integer: ${tens} × ${tens + 1} = ${tens * (tens + 1)}. Append 25: ${tens * (tens + 1)}25 = ${val * val}.`, level };
     }
     if (type === 1) {
       const k = integer(random, 6, 24);
       const n = k * 4;
-      return { mode, prompt: `${n} × 25`, answer: n * 25, strategy: `Divide by 4 (${k}) then multiply by 100 = ${n * 25}.`, level };
+      return { mode, prompt: `${n} × 25`, answer: n * 25, strategy: `Since 25 = 100 ÷ 4, calculate ${n} ÷ 4 = ${k}, then multiply by 100: ${k} × 100 = ${n * 25}.`, level };
     }
     if (type === 2) {
       const n = integer(random, 6, 30);
-      return { mode, prompt: `${n} ÷ 0.25`, answer: n * 4, strategy: `Dividing by 0.25 is multiplying by 4: ${n} × 4 = ${n * 4}.`, level };
+      return { mode, prompt: `${n} ÷ 0.25`, answer: n * 4, strategy: `0.25 is one quarter. Dividing by one quarter asks how many quarters fit in ${n}; each whole has 4, so ${n} × 4 = ${n * 4}.`, level };
     }
     const a = choose(random, [3, 4, 6, 7, 8, 9]);
     const b = choose(random, [4, 5, 6, 7, 8, 9]);
     const prod = a * b;
-    return { mode, prompt: `${prod} ÷ 0.0${a}`, answer: b * 100, strategy: `Shift 2 decimal places: ${prod}00 ÷ ${a} = ${b * 100}.`, level };
+    return { mode, prompt: `${prod} ÷ 0.0${a}`, answer: b * 100, strategy: `Multiply both numbers by 100 to clear the divisor's two decimal places: ${prod} × 100 ÷ ${a} = ${prod * 100} ÷ ${a} = ${b * 100}.`, level };
   }
   if (level === 3) {
     const type = integer(random, 0, 3);
     if (type === 0) {
       const k = integer(random, 2, 12);
       const n = k * 8;
-      return { mode, prompt: `${n} × 125`, answer: n * 125, strategy: `125 = 1000/8: ${n} ÷ 8 = ${k}; ${k} × 1000 = ${n * 125}.`, level };
+      return { mode, prompt: `${n} × 125`, answer: n * 125, strategy: `Use 125 = 1,000 ÷ 8. First ${n} ÷ 8 = ${k}; then ${k} × 1,000 = ${n * 125}. This is the same as multiplying by 125.`, level };
     }
     if (type === 1) {
       const n = integer(random, 3, 15);
-      return { mode, prompt: `${n} ÷ 0.125`, answer: n * 8, strategy: `Dividing by 0.125 is multiplying by 8: ${n} × 8 = ${n * 8}.`, level };
+      return { mode, prompt: `${n} ÷ 0.125`, answer: n * 8, strategy: `0.125 = 1/8. Dividing by 1/8 asks how many eighths fit in ${n}, so multiply by 8: ${n} × 8 = ${n * 8}.`, level };
     }
     if (type === 2) {
       const T = choose(random, [30, 40, 50, 60, 70, 80]);
       const d = choose(random, [2, 3, 4]);
       const ans = T * T - d * d;
-      return { mode, prompt: `${T + d} × ${T - d}`, answer: ans, strategy: `(a+b)(a-b) = ${T}² - ${d}² = ${T * T} - ${d * d} = ${ans}.`, level };
+      return { mode, prompt: `${T + d} × ${T - d}`, answer: ans, strategy: `These factors are equally far from ${T}: (${T} + ${d})(${T} − ${d}). Use (a+b)(a−b) = a²−b²: ${T}² − ${d}² = ${T * T} − ${d * d} = ${ans}.`, level };
     }
     const k = choose(random, [6, 7, 8, 9, 11, 12, 13, 14, 15]);
     const val = Number(((k * k) / 100).toFixed(2));
     const ans = Number((k / 10).toFixed(1));
-    return { mode, prompt: `√${val}`, answer: ans, strategy: `√${k * k} = ${k}; 2 decimal places become 1 decimal place: ${ans}.`, level };
+    return { mode, prompt: `√${val}`, answer: ans, strategy: `Look for the square root of the digits: ${k * k} is ${k}², so ${val} = ${k}²/100 = (${k}/10)². Therefore √${val} = ${k}/10 = ${ans}.`, level };
   }
   if (level === 4) {
     const type = integer(random, 0, 2);
@@ -819,36 +834,38 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const d2 = integer(random, 2, 7);
       const a = 100 - d1;
       const b = 100 - d2;
-      return { mode, prompt: `${a} × ${b}`, answer: a * b, strategy: `Base 100 deficits -${d1} and -${d2}: ${a} - ${d2} = ${a - d2}, (${d1} × ${d2} = ${d1 * d2}) ⟹ ${a * b}.`, level };
+      const rightPart = String(d1 * d2).padStart(2, "0");
+      return { mode, prompt: `${a} × ${b}`, answer: a * b, strategy: `Both numbers are close to 100. Their deficits are ${d1} and ${d2}. Cross-subtract: ${a} - ${d2} = ${a - d2}. Multiply the deficits: ${d1} × ${d2} = ${rightPart}. Join the two-digit parts: ${a - d2}|${rightPart} = ${a * b}.`, level };
     }
     if (type === 1) {
       const s1 = integer(random, 2, 8);
       const s2 = integer(random, 2, 8);
       const a = 100 + s1;
       const b = 100 + s2;
-      return { mode, prompt: `${a} × ${b}`, answer: a * b, strategy: `Base 100 surplus +${s1} and +${s2}: ${a} + ${s2} = ${a + s2}, (${s1} × ${s2} = ${s1 * s2}) ⟹ ${a * b}.`, level };
+      const rightPart = String(s1 * s2).padStart(2, "0");
+      return { mode, prompt: `${a} × ${b}`, answer: a * b, strategy: `Both numbers are above 100 by ${s1} and ${s2}. Cross-add: ${a} + ${s2} = ${a + s2}. Multiply the surpluses: ${s1} × ${s2} = ${rightPart}. Join the two-digit parts: ${a + s2}|${rightPart} = ${a * b}.`, level };
     }
     const k = integer(random, 6, 20);
     const n = k * 4;
     const ans = Math.round(n * 1.25);
-    return { mode, prompt: `1.25 × ${n}`, answer: ans, strategy: `1.25 = 1 + 1/4: ${n} + ${k} = ${ans}.`, level };
+    return { mode, prompt: `1.25 × ${n}`, answer: ans, strategy: `1.25 = 1 + 1/4, so take the whole ${n} and add one quarter of it. ${n} ÷ 4 = ${k}; then ${n} + ${k} = ${ans}.`, level };
   }
   const type = integer(random, 0, 2);
   if (type === 0) {
     const tens = choose(random, [10, 11, 12]);
     const val = tens * 10 + 5;
-    return { mode, prompt: `${val}²`, answer: val * val, strategy: `${tens} × ${tens + 1} = ${tens * (tens + 1)}, append 25 ⟹ ${val * val}.`, level };
+    return { mode, prompt: `${val}²`, answer: val * val, strategy: `For a square ending in 5, multiply the part before 5 by the next integer: ${tens} × ${tens + 1} = ${tens * (tens + 1)}. Append 25: ${tens * (tens + 1)}25 = ${val * val}.`, level };
   }
   if (type === 1) {
     const pairs = [[75, 25], [65, 35], [85, 15], [55, 45], [70, 30], [80, 20]] as const;
     const [a, b] = choose(random, pairs);
     const ans = (a - b) * 100;
-    return { mode, prompt: `${a}² − ${b}²`, answer: ans, strategy: `(a - b)(a + b) = (${a} - ${b}) × 100 = ${ans}.`, level };
+    return { mode, prompt: `${a}² − ${b}²`, answer: ans, strategy: `Use the difference-of-squares identity a² - b² = (a - b)(a + b). Here ${a} + ${b} = 100, so ${a}² - ${b}² = (${a} - ${b}) × 100 = ${ans}.`, level };
   }
   const deficit = integer(random, 2, 5);
   const mult = 1000 - deficit;
   const k = integer(random, 3, 9);
-  return { mode, prompt: `${mult} × ${k}`, answer: mult * k, strategy: `(1000 - ${deficit}) × ${k} = ${1000 * k} - ${deficit * k} = ${mult * k}.`, level };
+  return { mode, prompt: `${mult} × ${k}`, answer: mult * k, strategy: `Write ${mult} as 1,000 - ${deficit}. Then ${mult} × ${k} = (1,000 × ${k}) - (${deficit} × ${k}) = ${1000 * k} - ${deficit * k} = ${mult * k}.`, level };
 }
 
 export function createPracticeSession(seed: number, mode: PracticeModeId, requestedLevel: number): PracticeQuestion[] {
