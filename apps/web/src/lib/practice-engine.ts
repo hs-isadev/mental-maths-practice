@@ -172,6 +172,17 @@ function allRoots(
   };
 }
 
+function quadraticRootTip(roots: [number, number], linear: number, constant: number): string {
+  const [first, second] = roots;
+  const firstBracket = -first;
+  const secondBracket = -second;
+  const bracket = (value: number) => value < 0 ? `x - ${Math.abs(value)}` : `x + ${value}`;
+  const signReason = constant < 0
+    ? `The constant is ${constant}, so the product of the roots is negative: one root is positive and one is negative. The roots add to ${-linear}, so the root with the larger magnitude has that sign. The bracket numbers must multiply to ${constant} and add to the x-term coefficient, ${linear}.`
+    : `The constant is ${constant}, so the roots have the same sign. Their sum is ${-linear}, so both roots are ${-linear > 0 ? "positive" : "negative"}. The bracket numbers must multiply to ${constant} and add to the x-term coefficient, ${linear}.`;
+  return `${signReason} The matching pair is ${firstBracket} and ${secondBracket}, since ${firstBracket} + (${secondBracket}) = ${linear} and their product is ${constant}. Factor as (${bracket(firstBracket)})(${bracket(secondBracket)}) = 0, so the solutions are ${first} and ${second}.`;
+}
+
 function generatePhysicsQuestion(
   random: () => number,
   level: number,
@@ -570,8 +581,8 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       const S = a + b;
       const P = a * b;
       const type = integer(random, 0, 3);
-      if (type === 0) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], `Factor as (x - ${a})(x - ${b}) = 0; the solutions are ${a} and ${b}.`, level);
-      if (type === 1) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], `Factor as (x - ${a})(x - ${b}) = 0; the solutions are ${a} and ${b}.`, level);
+      if (type === 0) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], quadraticRootTip([a, b], -S, P), level);
+      if (type === 1) return allRoots(mode, `x² - ${S}x + ${P} = 0`, [a, b], quadraticRootTip([a, b], -S, P), level);
       if (type === 2) return { mode, prompt: `Number of integer solutions to x² - ${S}x + ${P} ≤ 0`, answer: b - a + 1, strategy: `Roots ${a} and ${b} inclusive: count = ${b} - ${a} + 1 = ${b - a + 1}.`, level };
       const r = integer(random, 3, 10);
       return { mode, prompt: `Smallest integer satisfying x² ≤ ${r * r}`, answer: -r, strategy: `x² ≤ ${r * r} means -${r} ≤ x ≤ ${r}; minimum integer is -${r}.`, level };
@@ -586,7 +597,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 0) return { mode, prompt: `Smallest integer satisfying ${quadStr} ≤ 0`, answer: -a, strategy: `Factors to (x + ${a})(x - ${b}) ≤ 0: interval [ -${a}, ${b} ]; smallest integer is -${a}.`, level };
       if (type === 1) return { mode, prompt: `Largest integer satisfying ${quadStr} < 0`, answer: b - 1, strategy: `Factors to (x + ${a})(x - ${b}) < 0: open interval (-${a}, ${b}); largest integer is ${b} - 1 = ${b - 1}.`, level };
       if (type === 2) return { mode, prompt: `Number of integer solutions to ${quadStr} ≤ 0`, answer: b + a + 1, strategy: `Inclusive integer solutions from -${a} to ${b}: count = ${b} - (-${a}) + 1 = ${b + a + 1}.`, level };
-      return allRoots(mode, `${quadStr} = 0`, [-a, b], `Factor as (x + ${a})(x - ${b}) = 0; the solutions are -${a} and ${b}.`, level);
+      return allRoots(mode, `${quadStr} = 0`, [-a, b], quadraticRootTip([-a, b], b - a, -(a * b)), level);
     }
     if (level === 4) {
       const type = integer(random, 0, 2);
@@ -641,18 +652,18 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       if (type === 2) {
         const a = integer(random, 1, 8);
         const b = integer(random, a + 1, a + 10);
-        return allRoots(mode, `x² - ${a + b}x + ${a * b} = 0`, [a, b], `Factor the equation as (x - ${a})(x - ${b}) = 0, so both solutions are ${a} and ${b}.`, level);
+        return allRoots(mode, `x² - ${a + b}x + ${a * b} = 0`, [a, b], quadraticRootTip([a, b], -(a + b), a * b), level);
       }
       const a = integer(random, 1, 8);
       const b = integer(random, a + 1, a + 10);
-        return allRoots(mode, `x² - ${a + b}x + ${a * b} = 0`, [a, b], `Factor the equation as (x - ${a})(x - ${b}) = 0, so both solutions are ${a} and ${b}.`, level);
+      return allRoots(mode, `x² - ${a + b}x + ${a * b} = 0`, [a, b], quadraticRootTip([a, b], -(a + b), a * b), level);
     }
     if (level === 2) {
       const type = integer(random, 0, 3);
       if (type === 0) {
         const p = integer(random, 1, 8);
         const q = integer(random, p + 1, p + 12);
-        return allRoots(mode, `x² - ${q - p}x - ${p * q} = 0`, [-p, q], `Factor as (x - ${q})(x + ${p}) = 0; both solutions are -${p} and ${q}.`, level);
+        return allRoots(mode, `x² - ${q - p}x - ${p * q} = 0`, [-p, q], quadraticRootTip([-p, q], -(q - p), -(p * q)), level);
       }
       if (type === 1) {
         const p = integer(random, 1, 8);
@@ -661,11 +672,11 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
       }
       if (type === 2) {
         const k = integer(random, 2, 16);
-        return allRoots(mode, `x² - x - ${k * (k + 1)} = 0`, [-k, k + 1], `Factor as (x - ${k + 1})(x + ${k}) = 0; both solutions are -${k} and ${k + 1}.`, level);
+        return allRoots(mode, `x² - x - ${k * (k + 1)} = 0`, [-k, k + 1], quadraticRootTip([-k, k + 1], -1, -(k * (k + 1))), level);
       }
       const p = integer(random, 1, 8);
       const q = integer(random, p + 1, p + 12);
-      return allRoots(mode, `x² + ${q - p}x - ${p * q} = 0`, [-q, p], `Factor as (x + ${q})(x - ${p}) = 0; both solutions are -${q} and ${p}.`, level);
+      return allRoots(mode, `x² + ${q - p}x - ${p * q} = 0`, [-q, p], quadraticRootTip([-q, p], q - p, -(p * q)), level);
     }
     if (level === 3) {
       const type = integer(random, 0, 4);
