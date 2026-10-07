@@ -66,11 +66,6 @@ export function PracticeDashboard({ practiceHistory, hexHistory, levels, hexLeve
   const bestAccuracy = combined.length ? Math.max(...combined.map((result) => result.accuracy)) : 0;
   const latestMean = combined.find((result) => result.meanMs > 0)?.meanMs ?? 0;
 
-  function startAtChosenLevel(mode: PracticeModeId) {
-    const level = sessionLevel === "adaptive" ? levels[mode] : Number(sessionLevel);
-    onStart(mode, { level });
-  }
-
   function startHexAtChosenLevel() {
     const level = sessionLevel === "adaptive" ? hexLevel : Number(sessionLevel);
     onStart("hexadecimal", { level });

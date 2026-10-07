@@ -1,0 +1,11 @@
+{
+  "name": "mental-maths-grader",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@receptron/laya": "0.1.2"
+  }
+}

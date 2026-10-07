@@ -67,10 +67,20 @@
 .practice-topic { color: #687368; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .practice-question-stage h1 { max-width: 900px; margin: 42px 0 44px; text-align: center; font-family: var(--mono); font-size: clamp(42px, 7vw, 82px); line-height: 1.12; letter-spacing: -.05em; }
 .practice-question-stage h1.flash-hidden { color: #8b968b; letter-spacing: .12em; }
+.practice-question-stage h1.scenario-question { max-width: 760px; margin: 28px 0 30px; text-align: left; font-family: var(--sans); font-size: clamp(22px, 2.5vw, 31px); line-height: 1.45; letter-spacing: -.025em; }
 .flash-status { min-height: 24px; margin: -26px 0 20px; color: #667166; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .flash-status.hidden { color: #904b44; }
 .practice-answer-form .conversion-input { grid-template-columns: auto 1fr auto; }
 .practice-answer-form .conversion-input input { text-transform: none; }
+.physics-working { width: min(100%, 760px); margin: -12px 0 24px; }
+.physics-working-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; color: #364238; font-size: 13px; font-weight: 800; }
+.clear-working { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; color: #536052; background: transparent; border: 1px solid #d5dbd3; border-radius: 6px; cursor: pointer; font: inherit; font-size: 11px; }
+.clear-working svg { width: 14px; height: 14px; }
+.physics-working-canvas { display: block; width: 100%; height: auto; background-color: #fff; background-image: linear-gradient(#e9ede7 1px, transparent 1px), linear-gradient(90deg, #e9ede7 1px, transparent 1px); background-size: 24px 24px; border: 1px solid #cdd5ca; border-radius: 8px; cursor: crosshair; touch-action: none; }
+.working-note { margin: 6px 0 0; color: #788278; font-size: 11px; }
+.ocr-transcription { display: grid; gap: 7px; margin-top: 14px; color: #364238; font-size: 12px; font-weight: 800; }
+.ocr-transcription textarea { width: 100%; min-height: 92px; padding: 10px 12px; color: #182019; background: #fff; border: 1px solid #cdd5ca; border-radius: 7px; font: 14px/1.5 var(--mono); resize: vertical; }
+.ocr-transcription textarea:focus-visible { outline: 2px solid #7e9e3e; outline-offset: 2px; }
 .practice-live-panel { padding: 34px 28px; color: #e6ebe2; background: #111612; border-left: 1px solid var(--line); }
 .practice-live-panel h2 { margin: 0 0 24px; font-size: 18px; }
 .practice-live-panel dl { margin: 0; }

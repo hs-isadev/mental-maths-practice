@@ -1,15 +1,6 @@
 export const PRACTICE_SESSION_LENGTH = 20;
 export const PRACTICE_SESSION_DURATION_MS = 10 * 60 * 1_000;
 
-// Configurable level parameters - makes levels changeable
-const PRACTICE_LEVEL_CONFIG = {
-  1: { minMax: [20, 100], desc: "Basic addition/subtraction" },
-  2: { minMax: [100, 500], desc: "Intermediate calculations" },
-  3: { minMax: [500, 2_000], desc: "Advanced arithmetic" },
-  4: { minMax: [2_000, 10_000], desc: "High-level math" },
-  5: { minMax: [10_000, 50_000], desc: "Mastery level" },
-};
-
 export type PracticeModeId =
   | "addition"
   | "subtraction"
@@ -71,6 +62,11 @@ export interface PracticeAttempt {
   expectedAnswer?: number | number[];
   submittedAnswer?: string;
   strategy?: string;
+  workScore?: number;
+  workOutOf?: number;
+  methodMark?: number;
+  unitMark?: number;
+  expectedUnit?: string;
   correct: boolean;
   responseMs: number;
 }
@@ -151,7 +147,8 @@ export function getLevelConfig(level: number): {
   desc: string;
   params: Record<string, unknown>;
 } {
-  return PRACTICE_LEVEL_CONFIGS[Math.min(level, 5) as 1 | 2 | 3 | 4 | 5] ?? PRACTICE_LEVEL_CONFIGS[1]!;
+  const config = PRACTICE_LEVEL_CONFIGS[Math.min(level, 5) as 1 | 2 | 3 | 4 | 5] ?? PRACTICE_LEVEL_CONFIGS[1]!;
+  return { ...config, params: config.params ?? {} };
 }
 
 function allRoots(
@@ -396,7 +393,7 @@ function generateQuestion(random: () => number, mode: Exclude<PracticeModeId, "m
     return { mode, prompt: `Pay £${paid} for items costing £${a * b}. Change?`, answer: paid - a * b, strategy: `Change = amount paid − cost: £${paid} − £${a * b} = £${paid - a * b}.`, level };
   }
 
-  if (mode === "physics" && level === 0) {
+  if ((mode as string) === "physics" && level < 0) {
     if (level === 1) {
       const type = integer(random, 0, 3);
       if (type === 0) {
